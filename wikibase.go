@@ -79,7 +79,7 @@ func (c *WikiBaseClient) GetEditingToken() (string, error) {
 	return *c.editToken, nil
 }
 
-func (c *WikiBaseClient) getWikibaseThingForLabel(thing WikiBaseType, label string) (string, error) {
+func (c *WikiBaseClient) getWikibaseThingIDForLabel(thing WikiBaseType, label string) ([]string, error) {
 
 	response, err := c.client.Get(
 		map[string]string{
@@ -92,36 +92,39 @@ func (c *WikiBaseClient) getWikibaseThingForLabel(thing WikiBaseType, label stri
 	)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer response.Close()
 
 	var search WikiBaseSearchResponse
 	err = json.NewDecoder(response).Decode(&search)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	switch len(search.Query.Items) {
-	case 0:
-		return "", fmt.Errorf("Failed to find any matching properties for %s", label)
-	case 1:
-		parts := strings.Split(search.Query.Items[0].Title, ":")
-		if len(parts) != 2 {
-			return "", fmt.Errorf("We expected type:value in reply, but got: %v", search.Query.Items[0].Title)
+	// the search will return close matches not actual matches potentially, so make sure we get exactly
+	// matches only
+	filtered_items := make([]string, 0)
+	for _, item := range search.Query.Items {
+		if item.DisplayText == label {
+
+			parts := strings.Split(item.Title, ":")
+			if len(parts) != 2 {
+				return nil, fmt.Errorf("We expected type:value in reply, but got: %v", item.Title)
+			}
+			filtered_items = append(filtered_items, parts[1])
 		}
-		return parts[1], nil // TODO fix
-	default:
-		return "", fmt.Errorf("Too many matches returned for %s: %d", label, len(search.Query.Items))
 	}
+
+	return filtered_items, nil
 }
 
-func (c *WikiBaseClient) GetPropertyForLabel(label string) (string, error) {
-	return c.getWikibaseThingForLabel(WikiBaseProperty, label)
+func (c *WikiBaseClient) GetPropertyIDsForLabel(label string) ([]string, error) {
+	return c.getWikibaseThingIDForLabel(WikiBaseProperty, label)
 }
 
-func (c *WikiBaseClient) GetItemForLabel(label string) (string, error) {
-	return c.getWikibaseThingForLabel(WikiBaseItem, label)
+func (c *WikiBaseClient) GetItemIDsForLabel(label string) ([]string, error) {
+	return c.getWikibaseThingIDForLabel(WikiBaseItem, label)
 }
 
 func (c *WikiBaseClient) CreateArticle(title string, body string) (int, error) {

@@ -141,7 +141,7 @@ func TestGettingItemForLabel(t *testing.T) {
                 "ns": 120,
                 "title": "Item:Q4",
                 "pageid": 11,
-                "displaytext": "wibble"
+                "displaytext": "blah"
             }
         ]
     }
@@ -149,12 +149,15 @@ func TestGettingItemForLabel(t *testing.T) {
 `)
 	wikibase := NewWikiBaseClient(client)
 
-	resp, err := wikibase.GetItemForLabel("blah")
+	resp, err := wikibase.GetItemIDsForLabel("blah")
 
 	if err != nil {
 		t.Errorf("Got unexpected error: %v", err)
 	}
-	if resp != "Q4" {
+	if len(resp) != 1 {
+		t.Errorf("Got more response than expected: %v", resp)
+	}
+	if resp[0] != "Q4" {
 		t.Errorf("ID did not match expected: %s", resp)
 	}
 
@@ -173,6 +176,26 @@ func TestGettingItemForLabel(t *testing.T) {
 	}
 }
 
+func TestGettingUniqueItemForLabel(t *testing.T) {
+
+	client := createClientWithResponse(`
+    	{"batchcomplete":"","query":{"wbsearch":[{"ns":120,"title":"Item:Q6","pageid":33,"displaytext":"annotation"},{"ns":120,"title":"Item:Q101","pageid":128,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q103","pageid":130,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q105","pageid":132,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q107","pageid":134,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q109","pageid":136,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q111","pageid":138,"displaytext":"annotation instance"}]}}
+`)
+	wikibase := NewWikiBaseClient(client)
+
+	resp, err := wikibase.GetItemIDsForLabel("annotation")
+
+	if err != nil {
+		t.Errorf("Got unexpected error: %v", err)
+	}
+	if len(resp) != 1 {
+		t.Errorf("Got more response than expected: %v", resp)
+	}
+	if resp[0] != "Q6" {
+		t.Errorf("ID did not match expected: %s", resp)
+	}
+}
+
 func TestGettingPropertyForLabel(t *testing.T) {
 
 	client := createClientWithResponse(`
@@ -185,7 +208,7 @@ func TestGettingPropertyForLabel(t *testing.T) {
                 "ns": 120,
                 "title": "Property:P25",
                 "pageid": 11,
-                "displaytext": "wibble"
+                "displaytext": "blah"
             }
         ]
     }
@@ -193,12 +216,15 @@ func TestGettingPropertyForLabel(t *testing.T) {
 `)
 	wikibase := NewWikiBaseClient(client)
 
-	resp, err := wikibase.GetPropertyForLabel("blah")
+	resp, err := wikibase.GetPropertyIDsForLabel("blah")
 
 	if err != nil {
 		t.Errorf("Got unexpected error: %v", err)
 	}
-	if resp != "P25" {
+	if len(resp) != 1 {
+		t.Errorf("Got more response than expected: %v", resp)
+	}
+	if resp[0] != "P25" {
 		t.Errorf("ID did not match expected: %s", resp)
 	}
 
