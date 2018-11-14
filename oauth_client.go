@@ -15,8 +15,10 @@
 package wikibase
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/mrjones/oauth"
 )
@@ -29,6 +31,23 @@ type WikiBaseOAuthClientInterface interface {
 	Post(args map[string]string) (io.ReadCloser, error)
 }
 
+// Structured used to hold the consumer and access tokens, such that they can be serialised readily
+
+type ConsumerInformation struct {
+	Key    string `json:"key"`
+	Secret string `json:"secret"`
+}
+
+type AccessToken struct {
+	Token  string `json:"token"`
+	Secret string `json:"secret"`
+}
+
+type WikiBaseOAuthInformation struct {
+	Consumer ConsumerInformation `json:"consumer"`
+	Access   *AccessToken        `json:"access,omitempty"`
+}
+
 type WikiBaseOAuthClient struct {
 	APIURL string
 
@@ -37,16 +56,33 @@ type WikiBaseOAuthClient struct {
 }
 
 // Factory method for creating a new client
-func NewOAuthClient(consumerKey string, consumerSecret string, urlbase string, accessToken *oauth.AccessToken) *WikiBaseOAuthClient {
+
+func LoadOauthInformation(path string) (WikiBaseOAuthInformation, error) {
+	var info WikiBaseOAuthInformation
+
+	f, err := os.Open(path)
+	if err != nil {
+		return WikiBaseOAuthInformation{}, err
+	}
+
+	err = json.NewDecoder(f).Decode(&info)
+	return info, err
+}
+
+func NewOAuthClient(oauthInfo WikiBaseOAuthInformation, urlbase string) *WikiBaseOAuthClient {
 
 	res := WikiBaseOAuthClient{
-		APIURL:      fmt.Sprintf("%s/w/api.php", urlbase),
-		AccessToken: accessToken,
+		APIURL: fmt.Sprintf("%s/w/api.php", urlbase),
+	}
+
+	if oauthInfo.Access != nil {
+		aToken := oauth.AccessToken{Token: oauthInfo.Access.Token, Secret: oauthInfo.Access.Secret}
+		res.AccessToken = &aToken
 	}
 
 	res.consumer = oauth.NewConsumer(
-		consumerKey,
-		consumerSecret,
+		oauthInfo.Consumer.Key,
+		oauthInfo.Consumer.Secret,
 		oauth.ServiceProvider{
 			RequestTokenUrl:   fmt.Sprintf("%s/wiki/Special:OAuth/initiate", urlbase),
 			AuthorizeTokenUrl: fmt.Sprintf("%s/wiki/Special:OAuth/authorize", urlbase),

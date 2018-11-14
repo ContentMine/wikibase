@@ -95,7 +95,7 @@ func TestErrorGettingEditingTokenWhenAlreadyExists(t *testing.T) {
 		t.Errorf("Got unexpected error: %v", err)
 	}
 	if resp != token {
-	    t.Errorf("Got unexpected token: %s", resp)
+		t.Errorf("Got unexpected token: %s", resp)
 	}
 
 	// Check that the request wasn't made
