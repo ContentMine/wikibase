@@ -160,7 +160,7 @@ func (c *WikiBaseClient) CreateArticle(title string, body string) (int, error) {
 	}
 
 	if res.Error != nil {
-		return 0, fmt.Errorf("%s: %s", res.Error.Code, res.Error.Info)
+		return 0, res.Error
 	}
 
 	if res.Edit == nil {
@@ -202,7 +202,7 @@ func (c *WikiBaseClient) CreateItemInstance(label string) (string, error) {
 	}
 
 	if res.Error != nil {
-		return "", fmt.Errorf("%s: %s", res.Error.Code, res.Error.Info)
+		return "", res.Error
 	}
 
 	if res.Success != 1 {

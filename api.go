@@ -14,6 +14,10 @@
 
 package wikibase
 
+import (
+	"fmt"
+)
+
 type WikiBaseType string
 
 const (
@@ -94,4 +98,8 @@ type WikiBaseItemEditResponse struct {
 	Entity  *WikiBaseItemEntity `json:"entity"`
 	Success int                 `json:"success"`
 	Error   *WikiBaseError      `json:"error"`
+}
+
+func (e *WikiBaseError) Error() string {
+	return fmt.Sprintf("Error from wikibase %s: %s", e.Code, e.Info)
 }
