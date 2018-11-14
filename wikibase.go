@@ -112,7 +112,7 @@ func (c *WikiBaseClient) getWikibaseThingForLabel(thing WikiBaseType, label stri
 		}
 		return parts[1], nil // TODO fix
 	default:
-		return "", fmt.Errorf("Too many matches returned: %d", len(search.Query.Items))
+		return "", fmt.Errorf("Too many matches returned for %s: %d", label, len(search.Query.Items))
 	}
 }
 
@@ -212,10 +212,3 @@ func (c *WikiBaseClient) CreateItemInstance(label string) (string, error) {
 
 	return res.Entity.ID, nil
 }
-
-/*func (c *WikiBaseClient) PopulateItemFromStruct(itemID string, value &Value) error {
-
-    t = reflect.TypeOf(value)
-
-
-}*/
