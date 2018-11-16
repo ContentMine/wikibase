@@ -179,7 +179,7 @@ func (c *WikiBaseClient) CreateArticle(title string, body string) (int, error) {
 	return res.Edit.PageID, nil
 }
 
-func (c *WikiBaseClient) CreateItemInstance(label string) (string, error) {
+func (c *WikiBaseClient) CreateItemInstance(label string) (ItemPropertyType, error) {
 
 	if len(label) == 0 {
 		return "", fmt.Errorf("Item label must not be an empty string.")

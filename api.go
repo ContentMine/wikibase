@@ -89,7 +89,7 @@ type WikiBaseItemLabel struct {
 
 type WikiBaseItemEntity struct {
 	Labels         map[string]WikiBaseItemLabel `json:"labels"`
-	ID             string                       `json:"id"`
+	ID             ItemPropertyType             `json:"id"`
 	Type           string                       `json:"type"`
 	LastRevisionID int                          `json:"lastrevid"`
 }

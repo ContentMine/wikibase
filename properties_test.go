@@ -15,25 +15,24 @@
 package wikibase
 
 import (
-    "fmt"
+	"fmt"
 	"testing"
 	"time"
 	"unicode/utf8"
 )
 
-
 // Test getting properties and items from a struct
 
 type SimpleTestStruct struct {
-    Name string `property:"propname"`
-    Address string `property:"address"`
-    Unused string
+	Name    string `property:"propname"`
+	Address string `property:"address"`
+	Unused  string
 }
 
 func TestParseSimpleStruct(t *testing.T) {
 
-    client := &WikiBaseNetworkTestClient{}
-    client.addDataResponse(`
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
 {
     "batchcomplete": "",
     "query": {
@@ -48,7 +47,7 @@ func TestParseSimpleStruct(t *testing.T) {
     }
 }
 `)
-    client.addDataResponse(`
+	client.addDataResponse(`
 {
     "batchcomplete": "",
     "query": {
@@ -65,32 +64,32 @@ func TestParseSimpleStruct(t *testing.T) {
 `)
 	wikibase := NewWikiBaseClient(client)
 
-    err := wikibase.MapPropertyAndItemConfiguration(SimpleTestStruct{})
-    if err != nil {
-        t.Fatalf("We got an unexpected error: %v", err)
-    }
+	err := wikibase.MapPropertyAndItemConfiguration(SimpleTestStruct{})
+	if err != nil {
+		t.Fatalf("We got an unexpected error: %v", err)
+	}
 
-    if len(wikibase.PropertyMap) != 2 {
-        t.Fatalf("Our property map does not have enough items: %v", wikibase.PropertyMap)
-    }
+	if len(wikibase.PropertyMap) != 2 {
+		t.Fatalf("Our property map does not have enough items: %v", wikibase.PropertyMap)
+	}
 }
 
 func TestParseSimpleStructErrors(t *testing.T) {
 
-    client := &WikiBaseNetworkTestClient{}
-    client.addErrorResponse(fmt.Errorf("Oops"))
+	client := &WikiBaseNetworkTestClient{}
+	client.addErrorResponse(fmt.Errorf("Oops"))
 	wikibase := NewWikiBaseClient(client)
 
-    err := wikibase.MapPropertyAndItemConfiguration(SimpleTestStruct{})
-    if err == nil {
-        t.Fatalf("We expected an error")
-    }
+	err := wikibase.MapPropertyAndItemConfiguration(SimpleTestStruct{})
+	if err == nil {
+		t.Fatalf("We expected an error")
+	}
 }
 
 func TestMapItemByName(t *testing.T) {
 
-    client := &WikiBaseNetworkTestClient{}
-    client.addDataResponse(`
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
 {
     "batchcomplete": "",
     "requestid": "42",
@@ -109,13 +108,13 @@ func TestMapItemByName(t *testing.T) {
 	wikibase := NewWikiBaseClient(client)
 
 	err := wikibase.MapItemConfigurationByLabel("blah")
-    if err != nil {
-        t.Fatalf("We got an unexpected error: %v", err)
-    }
+	if err != nil {
+		t.Fatalf("We got an unexpected error: %v", err)
+	}
 
-    if len(wikibase.ItemMap) != 1 {
-        t.Fatalf("Our item map does not have enough items: %v", wikibase.ItemMap)
-    }
+	if len(wikibase.ItemMap) != 1 {
+		t.Fatalf("Our item map does not have enough items: %v", wikibase.ItemMap)
+	}
 }
 
 // Tests for API Encoding of claims

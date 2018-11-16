@@ -25,12 +25,12 @@ import (
 // Test network layer substitute
 
 type WikiBaseNetworkTestClientResponse struct {
-    Data string
-    Error error
+	Data  string
+	Error error
 }
 
 type WikiBaseNetworkTestClient struct {
-    InvocationCount int
+	InvocationCount int
 	Responses       []WikiBaseNetworkTestClientResponse
 	MostRecentArgs  map[string]string
 }
@@ -49,33 +49,33 @@ func (c *WikiBaseNetworkTestClient) innerCall(args map[string]string) (io.ReadCl
 }
 
 func (c *WikiBaseNetworkTestClient) Get(args map[string]string) (io.ReadCloser, error) {
-    return c.innerCall(args)
+	return c.innerCall(args)
 }
 
 func (c *WikiBaseNetworkTestClient) Post(args map[string]string) (io.ReadCloser, error) {
-    return c.innerCall(args)
+	return c.innerCall(args)
 }
 
 func (c *WikiBaseNetworkTestClient) addDataResponse(data string) {
-    if c.Responses == nil {
-        c.Responses = make([]WikiBaseNetworkTestClientResponse, 0)
-    }
-    c.Responses = append(c.Responses, WikiBaseNetworkTestClientResponse{Data: data})
+	if c.Responses == nil {
+		c.Responses = make([]WikiBaseNetworkTestClientResponse, 0)
+	}
+	c.Responses = append(c.Responses, WikiBaseNetworkTestClientResponse{Data: data})
 }
 
 func (c *WikiBaseNetworkTestClient) addErrorResponse(err error) {
-    if c.Responses == nil {
-        c.Responses = make([]WikiBaseNetworkTestClientResponse, 0)
-    }
-    c.Responses = append(c.Responses, WikiBaseNetworkTestClientResponse{Error: err})
+	if c.Responses == nil {
+		c.Responses = make([]WikiBaseNetworkTestClientResponse, 0)
+	}
+	c.Responses = append(c.Responses, WikiBaseNetworkTestClientResponse{Error: err})
 }
 
 // Actual tests
 
 func TestErrorGettingEditingToken(t *testing.T) {
 
-    client := &WikiBaseNetworkTestClient{}
-    client.addErrorResponse(fmt.Errorf("Oops"))
+	client := &WikiBaseNetworkTestClient{}
+	client.addErrorResponse(fmt.Errorf("Oops"))
 
 	wikibase := NewWikiBaseClient(client)
 
@@ -96,8 +96,8 @@ func TestErrorGettingEditingToken(t *testing.T) {
 
 func TestErrorGettingEditingTokenWhenAlreadyExists(t *testing.T) {
 
-    client := &WikiBaseNetworkTestClient{}
-    client.addErrorResponse(fmt.Errorf("Oops"))
+	client := &WikiBaseNetworkTestClient{}
+	client.addErrorResponse(fmt.Errorf("Oops"))
 
 	wikibase := NewWikiBaseClient(client)
 	token := "inserttokenhere"
@@ -120,8 +120,8 @@ func TestErrorGettingEditingTokenWhenAlreadyExists(t *testing.T) {
 
 func TestGettingEditingToken(t *testing.T) {
 
-    client := &WikiBaseNetworkTestClient{}
-    client.addDataResponse(`
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
 {"batchcomplete":"","query":{"tokens":{"csrftoken":"345def4e73a103a0ea37f924f999ffad5be05458+\\\\"}}}
 `)
 	wikibase := NewWikiBaseClient(client)
@@ -146,8 +146,8 @@ func TestGettingEditingToken(t *testing.T) {
 
 func TestGettingItemForLabel(t *testing.T) {
 
-    client := &WikiBaseNetworkTestClient{}
-    client.addDataResponse(`
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
 {
     "batchcomplete": "",
     "requestid": "42",
@@ -194,8 +194,8 @@ func TestGettingItemForLabel(t *testing.T) {
 
 func TestGettingUniqueItemForLabel(t *testing.T) {
 
-    client := &WikiBaseNetworkTestClient{}
-    client.addDataResponse(`
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
     	{"batchcomplete":"","query":{"wbsearch":[{"ns":120,"title":"Item:Q6","pageid":33,"displaytext":"annotation"},{"ns":120,"title":"Item:Q101","pageid":128,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q103","pageid":130,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q105","pageid":132,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q107","pageid":134,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q109","pageid":136,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q111","pageid":138,"displaytext":"annotation instance"}]}}
 `)
 	wikibase := NewWikiBaseClient(client)
@@ -215,8 +215,8 @@ func TestGettingUniqueItemForLabel(t *testing.T) {
 
 func TestGettingPropertyForLabel(t *testing.T) {
 
-    client := &WikiBaseNetworkTestClient{}
-    client.addDataResponse(`
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
 {
     "batchcomplete": "",
     "requestid": "42",
@@ -263,8 +263,8 @@ func TestGettingPropertyForLabel(t *testing.T) {
 
 func TestCreateItem(t *testing.T) {
 
-    client := &WikiBaseNetworkTestClient{}
-    client.addDataResponse(`
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
 {
     "entity": {
         "aliases": {},
@@ -311,8 +311,8 @@ func TestCreateItem(t *testing.T) {
 
 func TestCreateItemWithoutEditToken(t *testing.T) {
 
-    client := &WikiBaseNetworkTestClient{}
-    client.addDataResponse(`
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
 {
     "entity": {
         "aliases": {},
