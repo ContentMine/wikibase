@@ -109,6 +109,10 @@ func stringClaimToAPIData(value string) ([]byte, error) {
 
 func itemClaimToAPIData(value ItemPropertyType) ([]byte, error) {
 
+    if len(value) == 0 {
+        return nil, fmt.Errorf("We expected an item ID, but got an empty string")
+    }
+
 	runes := []rune(value)
 	if runes[0] != 'Q' {
 		return nil, fmt.Errorf("We expected a Q number not %s (starts with %v)", value, runes[0])
@@ -256,7 +260,7 @@ func (c *WikiBaseClient) UploadClaimsForItem(item ItemPropertyType, i interface{
 
 			data, err := getDataForClaim(f, value)
 			if err != nil {
-				return err
+				return fmt.Errorf("Failed to marshal %s on %s: %v", property_id, item, err)
 			}
 
 			err = c.createClaimOnItem(item, property_id, data)
