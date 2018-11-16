@@ -15,6 +15,7 @@
 package wikibase
 
 import (
+	"encoding"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -215,12 +216,12 @@ func getDataForClaim(f reflect.StructField, value reflect.Value) ([]byte, error)
 	full_type_name := fmt.Sprintf("%v", f.Type)
 	switch full_type_name {
 	case "time.Time":
-		m, ok := value.Interface().(json.Marshaler)
+		m, ok := value.Interface().(encoding.TextMarshaler)
 		if !ok {
 			return nil, fmt.Errorf("time.Time does not respect JSON marshalling any more.")
 		}
 		var err error
-		data, err = m.MarshalJSON()
+		data, err = m.MarshalText()
 		if err != nil {
 			return nil, err
 		}
