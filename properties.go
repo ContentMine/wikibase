@@ -17,6 +17,7 @@ package wikibase
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -48,6 +49,58 @@ type timeDataClaim struct {
 	CalendarModel string    `json:"calendarmodel"`
 }
 
+// Loading item and property labels from structs
+
+func (c *WikiBaseClient) MapItemConfigurationByLabel(label string) error {
+	labels, err := c.FetchItemIDsForLabel(label)
+	if err != nil {
+		return err
+	}
+	switch len(labels) {
+	case 0:
+		return fmt.Errorf("No item ID was found for %s", label)
+	case 1:
+		c.ItemMap[label] = ItemPropertyType(labels[0])
+	default:
+		return fmt.Errorf("Multiple item IDs found for %s: %v", labels, labels)
+	}
+	return nil
+}
+
+func (c *WikiBaseClient) MapPropertyAndItemConfiguration(i interface{}) error {
+
+	t := reflect.TypeOf(i)
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+
+		tag := f.Tag.Get("property")
+		if len(tag) > 0 {
+			labels, err := c.FetchPropertyIDsForLabel(tag)
+			if err != nil {
+				return err
+			}
+			switch len(labels) {
+			case 0:
+				return fmt.Errorf("No property ID was found for %s", tag)
+			case 1:
+				c.PropertyMap[tag] = labels[0]
+			default:
+				return fmt.Errorf("Multiple property IDs found for %s: %v", tag, labels)
+			}
+		}
+
+		tag = f.Tag.Get("item")
+		if len(tag) > 0 {
+			err := c.MapItemConfigurationByLabel(tag)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // Conversation functions
 
 func stringClaimToAPIData(value string) ([]byte, error) {
@@ -56,7 +109,7 @@ func stringClaimToAPIData(value string) ([]byte, error) {
 
 func itemClaimToAPIData(value ItemPropertyType) ([]byte, error) {
 
-    runes := []rune(value)
+	runes := []rune(value)
 	if runes[0] != 'Q' {
 		return nil, fmt.Errorf("We expected a Q number not %s (starts with %v)", value, runes[0])
 	}

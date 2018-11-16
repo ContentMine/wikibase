@@ -24,47 +24,59 @@ import (
 
 // Test network layer substitute
 
+type WikiBaseNetworkTestClientResponse struct {
+    Data string
+    Error error
+}
+
 type WikiBaseNetworkTestClient struct {
-	Error    error
-	Response string
-	Args     map[string]string
+    InvocationCount int
+	Responses       []WikiBaseNetworkTestClientResponse
+	MostRecentArgs  map[string]string
+}
+
+func (c *WikiBaseNetworkTestClient) innerCall(args map[string]string) (io.ReadCloser, error) {
+	c.MostRecentArgs = args
+
+	resp := c.Responses[c.InvocationCount]
+	c.InvocationCount += 1
+
+	if resp.Error != nil {
+		return nil, resp.Error
+	}
+
+	return ioutil.NopCloser(bytes.NewBuffer([]byte(resp.Data))), nil
 }
 
 func (c *WikiBaseNetworkTestClient) Get(args map[string]string) (io.ReadCloser, error) {
-
-	c.Args = args
-
-	if c.Error != nil {
-		return nil, c.Error
-	}
-
-	return ioutil.NopCloser(bytes.NewBuffer([]byte(c.Response))), nil
+    return c.innerCall(args)
 }
 
 func (c *WikiBaseNetworkTestClient) Post(args map[string]string) (io.ReadCloser, error) {
-
-	c.Args = args
-
-	if c.Error != nil {
-		return nil, c.Error
-	}
-
-	return ioutil.NopCloser(bytes.NewBuffer([]byte(c.Response))), nil
+    return c.innerCall(args)
 }
 
-func createClientWithResponse(str string) *WikiBaseNetworkTestClient {
-	return &WikiBaseNetworkTestClient{Response: str}
+func (c *WikiBaseNetworkTestClient) addDataResponse(data string) {
+    if c.Responses == nil {
+        c.Responses = make([]WikiBaseNetworkTestClientResponse, 0)
+    }
+    c.Responses = append(c.Responses, WikiBaseNetworkTestClientResponse{Data: data})
 }
 
-func createClientWithError(err error) *WikiBaseNetworkTestClient {
-	return &WikiBaseNetworkTestClient{Error: err}
+func (c *WikiBaseNetworkTestClient) addErrorResponse(err error) {
+    if c.Responses == nil {
+        c.Responses = make([]WikiBaseNetworkTestClientResponse, 0)
+    }
+    c.Responses = append(c.Responses, WikiBaseNetworkTestClientResponse{Error: err})
 }
 
 // Actual tests
 
 func TestErrorGettingEditingToken(t *testing.T) {
 
-	client := createClientWithError(fmt.Errorf("Oops"))
+    client := &WikiBaseNetworkTestClient{}
+    client.addErrorResponse(fmt.Errorf("Oops"))
+
 	wikibase := NewWikiBaseClient(client)
 
 	_, err := wikibase.GetEditingToken()
@@ -74,17 +86,19 @@ func TestErrorGettingEditingToken(t *testing.T) {
 	}
 
 	// Check that the request was also sane
-	if client.Args["action"] != "query" {
-		t.Errorf("Unexpected action requested: %v", client.Args)
+	if client.MostRecentArgs["action"] != "query" {
+		t.Errorf("Unexpected action requested: %v", client.MostRecentArgs)
 	}
-	if client.Args["meta"] != "tokens" {
-		t.Errorf("Unexpected action requested: %v", client.Args)
+	if client.MostRecentArgs["meta"] != "tokens" {
+		t.Errorf("Unexpected action requested: %v", client.MostRecentArgs)
 	}
 }
 
 func TestErrorGettingEditingTokenWhenAlreadyExists(t *testing.T) {
 
-	client := createClientWithError(fmt.Errorf("Oops"))
+    client := &WikiBaseNetworkTestClient{}
+    client.addErrorResponse(fmt.Errorf("Oops"))
+
 	wikibase := NewWikiBaseClient(client)
 	token := "inserttokenhere"
 	wikibase.editToken = &token
@@ -99,14 +113,15 @@ func TestErrorGettingEditingTokenWhenAlreadyExists(t *testing.T) {
 	}
 
 	// Check that the request wasn't made
-	if len(client.Args) != 0 {
-		t.Errorf("Unexpected args requested: %v", client.Args)
+	if len(client.MostRecentArgs) != 0 {
+		t.Errorf("Unexpected args requested: %v", client.MostRecentArgs)
 	}
 }
 
 func TestGettingEditingToken(t *testing.T) {
 
-	client := createClientWithResponse(`
+    client := &WikiBaseNetworkTestClient{}
+    client.addDataResponse(`
 {"batchcomplete":"","query":{"tokens":{"csrftoken":"345def4e73a103a0ea37f924f999ffad5be05458+\\\\"}}}
 `)
 	wikibase := NewWikiBaseClient(client)
@@ -121,17 +136,18 @@ func TestGettingEditingToken(t *testing.T) {
 	}
 
 	// Check that the request was also sane
-	if client.Args["action"] != "query" {
-		t.Errorf("Unexpected action requested: %v", client.Args)
+	if client.MostRecentArgs["action"] != "query" {
+		t.Errorf("Unexpected action requested: %v", client.MostRecentArgs)
 	}
-	if client.Args["meta"] != "tokens" {
-		t.Errorf("Unexpected action requested: %v", client.Args)
+	if client.MostRecentArgs["meta"] != "tokens" {
+		t.Errorf("Unexpected action requested: %v", client.MostRecentArgs)
 	}
 }
 
 func TestGettingItemForLabel(t *testing.T) {
 
-	client := createClientWithResponse(`
+    client := &WikiBaseNetworkTestClient{}
+    client.addDataResponse(`
 {
     "batchcomplete": "",
     "requestid": "42",
@@ -149,7 +165,7 @@ func TestGettingItemForLabel(t *testing.T) {
 `)
 	wikibase := NewWikiBaseClient(client)
 
-	resp, err := wikibase.GetItemIDsForLabel("blah")
+	resp, err := wikibase.FetchItemIDsForLabel("blah")
 
 	if err != nil {
 		t.Errorf("Got unexpected error: %v", err)
@@ -162,28 +178,29 @@ func TestGettingItemForLabel(t *testing.T) {
 	}
 
 	// Check that the request was also sane
-	if client.Args["action"] != "query" {
-		t.Errorf("Unexpected action requested: %v", client.Args)
+	if client.MostRecentArgs["action"] != "query" {
+		t.Errorf("Unexpected action requested: %v", client.MostRecentArgs)
 	}
-	if client.Args["list"] != "wbsearch" {
-		t.Errorf("Unexpected list requested: %v", client.Args)
+	if client.MostRecentArgs["list"] != "wbsearch" {
+		t.Errorf("Unexpected list requested: %v", client.MostRecentArgs)
 	}
-	if client.Args["wbssearch"] != "blah" {
-		t.Errorf("Unexpected search requested: %v", client.Args)
+	if client.MostRecentArgs["wbssearch"] != "blah" {
+		t.Errorf("Unexpected search requested: %v", client.MostRecentArgs)
 	}
-	if client.Args["wbstype"] != "item" {
-		t.Errorf("Unexpected type requested: %v", client.Args)
+	if client.MostRecentArgs["wbstype"] != "item" {
+		t.Errorf("Unexpected type requested: %v", client.MostRecentArgs)
 	}
 }
 
 func TestGettingUniqueItemForLabel(t *testing.T) {
 
-	client := createClientWithResponse(`
+    client := &WikiBaseNetworkTestClient{}
+    client.addDataResponse(`
     	{"batchcomplete":"","query":{"wbsearch":[{"ns":120,"title":"Item:Q6","pageid":33,"displaytext":"annotation"},{"ns":120,"title":"Item:Q101","pageid":128,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q103","pageid":130,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q105","pageid":132,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q107","pageid":134,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q109","pageid":136,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q111","pageid":138,"displaytext":"annotation instance"}]}}
 `)
 	wikibase := NewWikiBaseClient(client)
 
-	resp, err := wikibase.GetItemIDsForLabel("annotation")
+	resp, err := wikibase.FetchItemIDsForLabel("annotation")
 
 	if err != nil {
 		t.Errorf("Got unexpected error: %v", err)
@@ -198,7 +215,8 @@ func TestGettingUniqueItemForLabel(t *testing.T) {
 
 func TestGettingPropertyForLabel(t *testing.T) {
 
-	client := createClientWithResponse(`
+    client := &WikiBaseNetworkTestClient{}
+    client.addDataResponse(`
 {
     "batchcomplete": "",
     "requestid": "42",
@@ -216,7 +234,7 @@ func TestGettingPropertyForLabel(t *testing.T) {
 `)
 	wikibase := NewWikiBaseClient(client)
 
-	resp, err := wikibase.GetPropertyIDsForLabel("blah")
+	resp, err := wikibase.FetchPropertyIDsForLabel("blah")
 
 	if err != nil {
 		t.Errorf("Got unexpected error: %v", err)
@@ -229,23 +247,24 @@ func TestGettingPropertyForLabel(t *testing.T) {
 	}
 
 	// Check that the request was also sane
-	if client.Args["action"] != "query" {
-		t.Errorf("Unexpected action requested: %v", client.Args)
+	if client.MostRecentArgs["action"] != "query" {
+		t.Errorf("Unexpected action requested: %v", client.MostRecentArgs)
 	}
-	if client.Args["list"] != "wbsearch" {
-		t.Errorf("Unexpected list requested: %v", client.Args)
+	if client.MostRecentArgs["list"] != "wbsearch" {
+		t.Errorf("Unexpected list requested: %v", client.MostRecentArgs)
 	}
-	if client.Args["wbssearch"] != "blah" {
-		t.Errorf("Unexpected search requested: %v", client.Args)
+	if client.MostRecentArgs["wbssearch"] != "blah" {
+		t.Errorf("Unexpected search requested: %v", client.MostRecentArgs)
 	}
-	if client.Args["wbstype"] != "property" {
-		t.Errorf("Unexpected type requested: %v", client.Args)
+	if client.MostRecentArgs["wbstype"] != "property" {
+		t.Errorf("Unexpected type requested: %v", client.MostRecentArgs)
 	}
 }
 
 func TestCreateItem(t *testing.T) {
 
-	client := createClientWithResponse(`
+    client := &WikiBaseNetworkTestClient{}
+    client.addDataResponse(`
 {
     "entity": {
         "aliases": {},
@@ -279,20 +298,21 @@ func TestCreateItem(t *testing.T) {
 	}
 
 	// Check that the request was also sane
-	if client.Args["action"] != "wbeditentity" {
-		t.Errorf("Unexpected action requested: %v", client.Args)
+	if client.MostRecentArgs["action"] != "wbeditentity" {
+		t.Errorf("Unexpected action requested: %v", client.MostRecentArgs)
 	}
-	if client.Args["token"] != token {
-		t.Errorf("Unexpected token requested: %v", client.Args)
+	if client.MostRecentArgs["token"] != token {
+		t.Errorf("Unexpected token requested: %v", client.MostRecentArgs)
 	}
-	if client.Args["new"] != "item" {
-		t.Errorf("Unexpected search requested: %v", client.Args)
+	if client.MostRecentArgs["new"] != "item" {
+		t.Errorf("Unexpected search requested: %v", client.MostRecentArgs)
 	}
 }
 
 func TestCreateItemWithoutEditToken(t *testing.T) {
 
-	client := createClientWithResponse(`
+    client := &WikiBaseNetworkTestClient{}
+    client.addDataResponse(`
 {
     "entity": {
         "aliases": {},

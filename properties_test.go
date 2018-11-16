@@ -15,57 +15,156 @@
 package wikibase
 
 import (
+    "fmt"
 	"testing"
 	"time"
-    "unicode/utf8"
+	"unicode/utf8"
 )
 
 
-func TestStringClaimEncode(t *testing.T) {
+// Test getting properties and items from a struct
 
-    const testdata = "hello, world"
+type SimpleTestStruct struct {
+    Name string `property:"propname"`
+    Address string `property:"address"`
+    Unused string
+}
 
-    data, err := stringClaimToAPIData(testdata)
+func TestParseSimpleStruct(t *testing.T) {
+
+    client := &WikiBaseNetworkTestClient{}
+    client.addDataResponse(`
+{
+    "batchcomplete": "",
+    "query": {
+        "wbsearch": [
+            {
+                "ns": 120,
+                "title": "Property:P23",
+                "pageid": 11,
+                "displaytext": "propname"
+            }
+        ]
+    }
+}
+`)
+    client.addDataResponse(`
+{
+    "batchcomplete": "",
+    "query": {
+        "wbsearch": [
+            {
+                "ns": 120,
+                "title": "Property:P5",
+                "pageid": 11,
+                "displaytext": "address"
+            }
+        ]
+    }
+}
+`)
+	wikibase := NewWikiBaseClient(client)
+
+    err := wikibase.MapPropertyAndItemConfiguration(SimpleTestStruct{})
     if err != nil {
         t.Fatalf("We got an unexpected error: %v", err)
     }
-    // A cheap test, but check that the returned string is two characters longer due to being in quotes
-    if utf8.RuneCountInString(testdata) + 2 != utf8.RuneCountInString(string(data)) {
-        t.Fatalf("Length of encoded data not what we expected: %v", string(data))
+
+    if len(wikibase.PropertyMap) != 2 {
+        t.Fatalf("Our property map does not have enough items: %v", wikibase.PropertyMap)
     }
+}
+
+func TestParseSimpleStructErrors(t *testing.T) {
+
+    client := &WikiBaseNetworkTestClient{}
+    client.addErrorResponse(fmt.Errorf("Oops"))
+	wikibase := NewWikiBaseClient(client)
+
+    err := wikibase.MapPropertyAndItemConfiguration(SimpleTestStruct{})
+    if err == nil {
+        t.Fatalf("We expected an error")
+    }
+}
+
+func TestMapItemByName(t *testing.T) {
+
+    client := &WikiBaseNetworkTestClient{}
+    client.addDataResponse(`
+{
+    "batchcomplete": "",
+    "requestid": "42",
+    "query": {
+        "wbsearch": [
+            {
+                "ns": 120,
+                "title": "Item:Q4",
+                "pageid": 11,
+                "displaytext": "blah"
+            }
+        ]
+    }
+}
+`)
+	wikibase := NewWikiBaseClient(client)
+
+	err := wikibase.MapItemConfigurationByLabel("blah")
+    if err != nil {
+        t.Fatalf("We got an unexpected error: %v", err)
+    }
+
+    if len(wikibase.ItemMap) != 1 {
+        t.Fatalf("Our item map does not have enough items: %v", wikibase.ItemMap)
+    }
+}
+
+// Tests for API Encoding of claims
+
+func TestStringClaimEncode(t *testing.T) {
+
+	const testdata = "hello, world"
+
+	data, err := stringClaimToAPIData(testdata)
+	if err != nil {
+		t.Fatalf("We got an unexpected error: %v", err)
+	}
+	// A cheap test, but check that the returned string is two characters longer due to being in quotes
+	if utf8.RuneCountInString(testdata)+2 != utf8.RuneCountInString(string(data)) {
+		t.Fatalf("Length of encoded data not what we expected: %v", string(data))
+	}
 }
 
 func TestItemClaimEncode(t *testing.T) {
-    _, err := itemClaimToAPIData("Q42")
-    if err != nil {
-        t.Fatalf("We got an unexpected error: %v", err)
-    }
+	_, err := itemClaimToAPIData("Q42")
+	if err != nil {
+		t.Fatalf("We got an unexpected error: %v", err)
+	}
 }
 
 func TestPropertyAsItemClaimEncode(t *testing.T) {
-    _, err := itemClaimToAPIData("P42")
-    if err == nil {
-        t.Fatalf("We got an expected an error")
-    }
+	_, err := itemClaimToAPIData("P42")
+	if err == nil {
+		t.Fatalf("We got an expected an error")
+	}
 }
 
 func TestInvalidItemClaimEncode(t *testing.T) {
-    _, err := itemClaimToAPIData("42")
-    if err == nil {
-        t.Fatalf("We got an expected an error")
-    }
+	_, err := itemClaimToAPIData("42")
+	if err == nil {
+		t.Fatalf("We got an expected an error")
+	}
 }
 
 func TestQuntityClaimEncode(t *testing.T) {
-    _, err := quantityClaimToAPIData(42)
-    if err != nil {
-        t.Fatalf("We got an unexpected error: %v", err)
-    }
+	_, err := quantityClaimToAPIData(42)
+	if err != nil {
+		t.Fatalf("We got an unexpected error: %v", err)
+	}
 }
 
 func TestTimeDataClaimEncode(t *testing.T) {
-    _, err := timeDataClaimToAPIData(time.Now())
-    if err != nil {
-        t.Fatalf("We got an unexpected error: %v", err)
-    }
+	_, err := timeDataClaimToAPIData(time.Now())
+	if err != nil {
+		t.Fatalf("We got an unexpected error: %v", err)
+	}
 }

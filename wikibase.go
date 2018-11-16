@@ -17,6 +17,7 @@ package wikibase
 import (
 	"encoding/json"
 	"fmt"
+	//"reflect"
 	"strings"
 	"sync"
 )
@@ -27,10 +28,18 @@ type WikiBaseClient struct {
 	// Don't read directly - use GetEditingToken()
 	editToken     *string
 	editTokenLock sync.RWMutex
+
+	// Mapping of labels to IDs for Items and Properties.
+	PropertyMap map[string]string
+	ItemMap     map[string]ItemPropertyType
 }
 
 func NewWikiBaseClient(oauthClient WikiBaseOAuthClientInterface) *WikiBaseClient {
-	return &WikiBaseClient{client: oauthClient}
+	return &WikiBaseClient{
+		client:      oauthClient,
+		PropertyMap: make(map[string]string, 0),
+		ItemMap:     make(map[string]ItemPropertyType, 0),
+	}
 }
 
 func (c *WikiBaseClient) GetEditingToken() (string, error) {
@@ -119,11 +128,11 @@ func (c *WikiBaseClient) getWikibaseThingIDForLabel(thing WikiBaseType, label st
 	return filtered_items, nil
 }
 
-func (c *WikiBaseClient) GetPropertyIDsForLabel(label string) ([]string, error) {
+func (c *WikiBaseClient) FetchPropertyIDsForLabel(label string) ([]string, error) {
 	return c.getWikibaseThingIDForLabel(WikiBaseProperty, label)
 }
 
-func (c *WikiBaseClient) GetItemIDsForLabel(label string) ([]string, error) {
+func (c *WikiBaseClient) FetchItemIDsForLabel(label string) ([]string, error) {
 	return c.getWikibaseThingIDForLabel(WikiBaseItem, label)
 }
 
@@ -215,3 +224,14 @@ func (c *WikiBaseClient) CreateItemInstance(label string) (string, error) {
 
 	return res.Entity.ID, nil
 }
+
+/*func (c *WikiBaseClient) CreateClaimsOnItemInstance(item interface{}) error {
+
+	t = reflect.TypeOf(item)
+
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		tag := f.Tag.Get(tagname)
+	}
+
+}*/
