@@ -192,7 +192,7 @@ func (c *WikiBaseClient) createClaimOnItem(item ItemPropertyType, property_id st
 	}
 
 	if res.Error != nil {
-		return res.Error
+		return fmt.Errorf("Failed to process claim %s with data %v: %v", item, string(encoded_data), res.Error)
 	}
 
 	if res.Success != 1 {
