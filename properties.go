@@ -142,8 +142,8 @@ func quantityClaimToAPIData(value int) ([]byte, error) {
 func timeDataClaimToAPIData(value string) ([]byte, error) {
 
 	time_data := timeDataClaim{
-		Time:          value,
-		Precision:     4,
+		Time:          fmt.Sprintf("+0000000%s", value),
+		Precision:     11,
 		CalendarModel: "http://www.wikidata.org/entity/Q1985727",
 	}
 

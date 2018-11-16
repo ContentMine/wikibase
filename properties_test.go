@@ -177,7 +177,7 @@ func TestTimeDataClaimEncode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("we got an unexpected error: %v", err)
 	}
-	if claim.Time != "1976-06-06T13:45:02Z" {
+	if claim.Time != "+00000001976-06-06T13:45:02Z" {
 		t.Errorf("Got unexpected time value: %v", claim)
 	}
 }
