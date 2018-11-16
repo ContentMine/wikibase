@@ -15,6 +15,7 @@
 package wikibase
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
@@ -163,9 +164,21 @@ func TestQuntityClaimEncode(t *testing.T) {
 }
 
 func TestTimeDataClaimEncode(t *testing.T) {
-	_, err := timeDataClaimToAPIData("1976-06-06T13:45:02Z")
+	data, err := timeDataClaimToAPIData("1976-06-06T13:45:02Z")
 	if err != nil {
 		t.Fatalf("We got an unexpected error: %v", err)
+	}
+	if data == nil {
+		t.Fatalf("We go no data from claim encode")
+	}
+
+	claim := timeDataClaim{}
+	err = json.Unmarshal(data, &claim)
+	if err != nil {
+		t.Fatalf("we got an unexpected error: %v", err)
+	}
+	if claim.Time != "1976-06-06T13:45:02Z" {
+		t.Errorf("Got unexpected time value: %v", claim)
 	}
 }
 
