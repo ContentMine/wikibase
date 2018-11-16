@@ -100,6 +100,32 @@ type WikiBaseItemEditResponse struct {
 	Error   *WikiBaseError      `json:"error"`
 }
 
+type WikiBasePageInfo struct {
+	LastRevisionID int `json:"lastrevid"`
+}
+
+type WikiBaseSnakInfo struct {
+	SnakType string `json:"snaktype"`
+	Property string `json:"property"`
+	Hash     string `json:"hash"`
+	DataType string `json:"datatype"`
+	// Ignoring datavalue for now...
+}
+
+type WikiBaseClaimInfo struct {
+	MainSnak WikiBaseSnakInfo `json:"mainsnak"`
+	Type     string           `json:"type"`
+	ID       string           `json:"id"`
+	Rank     string           `json:"rank"`
+}
+
+type WikiBaseClaimEditResponse struct {
+	PageInfo WikiBasePageInfo  `json:"pageinfo"`
+	Success  int               `json:"success"`
+	Claim    WikiBaseClaimInfo `json:"claim"`
+	Error    *WikiBaseError    `json:"error"`
+}
+
 func (e *WikiBaseError) Error() string {
 	return fmt.Sprintf("Error from wikibase %s: %s", e.Code, e.Info)
 }

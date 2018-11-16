@@ -20,7 +20,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // If you're trying to encode structs to properties then you should use these types
@@ -41,12 +40,12 @@ type quantityClaim struct {
 }
 
 type timeDataClaim struct {
-	Time          time.Time `json:"time"`
-	TimeZone      int       `json:"timezone"`
-	Before        int       `json:"before"`
-	After         int       `json:"after"`
-	Precision     int       `json:"precision"`
-	CalendarModel string    `json:"calendarmodel"`
+	Time          string `json:"time"`
+	TimeZone      int    `json:"timezone"`
+	Before        int    `json:"before"`
+	After         int    `json:"after"`
+	Precision     int    `json:"precision"`
+	CalendarModel string `json:"calendarmodel"`
 }
 
 // Loading item and property labels from structs
@@ -139,7 +138,7 @@ func quantityClaimToAPIData(value int) ([]byte, error) {
 	return json.Marshal(quantity)
 }
 
-func timeDataClaimToAPIData(value time.Time) ([]byte, error) {
+func timeDataClaimToAPIData(value string) ([]byte, error) {
 
 	time_data := timeDataClaim{
 		Time:          value,
@@ -148,4 +147,121 @@ func timeDataClaimToAPIData(value time.Time) ([]byte, error) {
 	}
 
 	return json.Marshal(time_data)
+}
+
+// Upload properties for structs
+
+func (c *WikiBaseClient) createClaimOnItem(item ItemPropertyType, property_id string, encoded_data []byte) error {
+
+	if len(item) == 0 {
+		return fmt.Errorf("Item ID must not be an empty string.")
+	}
+	if len(property_id) == 0 {
+		return fmt.Errorf("Property ID must not be an empty string.")
+	}
+	if len(encoded_data) == 0 {
+		return fmt.Errorf("Encoded data must not be an empty string.")
+	}
+
+	editToken, terr := c.GetEditingToken()
+	if terr != nil {
+		return terr
+	}
+
+	response, err := c.client.Post(
+		map[string]string{
+			"action":   "wbcreateclaim",
+			"token":    editToken,
+			"entity":   string(item),
+			"property": property_id,
+			"snaktype": "value",
+			"value":    string(encoded_data),
+			"bot":      "1",
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+	defer response.Close()
+
+	var res WikiBaseClaimEditResponse
+	err = json.NewDecoder(response).Decode(&res)
+	if err != nil {
+		return err
+	}
+
+	if res.Error != nil {
+		return res.Error
+	}
+
+	if res.Success != 1 {
+		return fmt.Errorf("We got an unexpected success value: %v", res)
+	}
+
+	return nil
+
+}
+
+func getDataForClaim(f reflect.StructField, value reflect.Value) ([]byte, error) {
+
+	// now work out how to encode this. We currently support: string, int (as quantity), Time (as TimeData),
+	// and ItemPropertyType (as an item). Everything else we just raise an error on.
+
+	var data []byte
+
+	full_type_name := fmt.Sprintf("%v", f.Type)
+	switch full_type_name {
+	case "time.Time":
+		m, ok := value.Interface().(json.Marshaler)
+		if !ok {
+			return nil, fmt.Errorf("time.Time does not respect JSON marshalling any more.")
+		}
+		var err error
+		data, err = m.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		return timeDataClaimToAPIData(string(data))
+	case "string":
+		return stringClaimToAPIData(value.String())
+	case "int":
+		return quantityClaimToAPIData(int(value.Int()))
+	case "wikibase.ItemPropertyType":
+		return itemClaimToAPIData(ItemPropertyType(value.String()))
+	default:
+		return nil, fmt.Errorf("Tried to upload property of unrecognised type %s", full_type_name)
+	}
+}
+
+func (c *WikiBaseClient) UploadClaimsForItem(item ItemPropertyType, i interface{}) error {
+
+	t := reflect.TypeOf(i)
+	v := reflect.ValueOf(i)
+
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		value := v.Field(i)
+
+		tag := f.Tag.Get("property")
+		if len(tag) > 0 {
+
+			property_id, ok := c.PropertyMap[tag]
+			if ok == false {
+				return fmt.Errorf("No property map for property label %s", tag)
+			}
+
+			data, err := getDataForClaim(f, value)
+			if err != nil {
+				return err
+			}
+
+			err = c.createClaimOnItem(item, property_id, data)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

@@ -224,14 +224,3 @@ func (c *WikiBaseClient) CreateItemInstance(label string) (ItemPropertyType, err
 
 	return res.Entity.ID, nil
 }
-
-/*func (c *WikiBaseClient) CreateClaimsOnItemInstance(item interface{}) error {
-
-	t = reflect.TypeOf(item)
-
-	for i := 0; i < t.NumField(); i++ {
-		f := t.Field(i)
-		tag := f.Tag.Get(tagname)
-	}
-
-}*/
