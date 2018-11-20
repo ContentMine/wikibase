@@ -29,7 +29,7 @@ func (c *WikiBaseClient) UploadClaimsForItem(i interface{}) error {
 	// Can we find the headers used to record bits?
 	v := reflect.ValueOf(i)
 	if v.Kind() != reflect.Ptr {
-        return fmt.Errorf("Expected a pointer to the item to upload, not a copy")
+        return fmt.Errorf("Expected a pointer to the item to upload, not %v", v.Kind())
 	}
 	s := v.Elem()
 	if s.Kind() != reflect.Struct {

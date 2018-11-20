@@ -119,3 +119,51 @@ func TestUploadClaimWithoutPointer(t *testing.T) {
 	}
 }
 
+func TestUploadClaimWithArrayItem(t *testing.T) {
+
+	client := &WikiBaseNetworkTestClient{}
+	wikibase := NewWikiBaseClient(client)
+	wikibase.PropertyMap["test"] = "P14"
+	token := "insertokenhere"
+	wikibase.editToken = &token
+
+    items := make([]SingleClaimTestStruct, 1)
+
+	items[0].Test = "blah"
+	items[0].ID = "Q23"
+
+	err := wikibase.UploadClaimsForItem(items[0])
+	if err == nil {
+		t.Fatalf("We expected an error")
+	}
+}
+
+func TestUploadClaimWithArrayItemPointer(t *testing.T) {
+
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
+{"pageinfo":{"lastrevid":460},"success":1,"claim":{"mainsnak":{"snaktype":"value","property":"P14","hash":"db735571fef70e4d199d40fe10609312fa8e5fa9","datavalue":{"value":"wot!","type":"string"},"datatype":"string"},"type":"statement","id":"Q11$1AE01A5E-EAC8-4568-B866-8E07E93EAB63","rank":"normal"}}
+`)
+	wikibase := NewWikiBaseClient(client)
+	wikibase.PropertyMap["test"] = "P14"
+	token := "insertokenhere"
+	wikibase.editToken = &token
+
+    items := make([]SingleClaimTestStruct, 1)
+
+	items[0].Test = "blah"
+	items[0].ID = "Q23"
+
+	err := wikibase.UploadClaimsForItem(&items[0])
+	if err != nil {
+		t.Fatalf("We got an unexpected error: %v", err)
+	}
+
+	if len(items[0].PropertyIDs) != 1 {
+		t.Fatalf("We expected to have stored a property ID: %v", items[0])
+	}
+	if items[0].PropertyIDs["P14"] != "Q11$1AE01A5E-EAC8-4568-B866-8E07E93EAB63" {
+		t.Errorf("We got the wrong property ID: %v", items[0].PropertyIDs)
+	}
+}
+
