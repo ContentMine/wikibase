@@ -109,9 +109,9 @@ func stringClaimToAPIData(value string) ([]byte, error) {
 
 func itemClaimToAPIData(value ItemPropertyType) ([]byte, error) {
 
-    if len(value) == 0 {
-        return nil, fmt.Errorf("We expected an item ID, but got an empty string")
-    }
+	if len(value) == 0 {
+		return nil, fmt.Errorf("We expected an item ID, but got an empty string")
+	}
 
 	runes := []rune(value)
 	if runes[0] != 'Q' {
@@ -156,21 +156,21 @@ func timeDataClaimToAPIData(value string) ([]byte, error) {
 
 // Upload properties for structs
 
-func (c *WikiBaseClient) createClaimOnItem(item ItemPropertyType, property_id string, encoded_data []byte) error {
+func (c *WikiBaseClient) createClaimOnItem(item ItemPropertyType, property_id string, encoded_data []byte) (string, error) {
 
 	if len(item) == 0 {
-		return fmt.Errorf("Item ID must not be an empty string.")
+		return "", fmt.Errorf("Item ID must not be an empty string.")
 	}
 	if len(property_id) == 0 {
-		return fmt.Errorf("Property ID must not be an empty string.")
+		return "", fmt.Errorf("Property ID must not be an empty string.")
 	}
 	if len(encoded_data) == 0 {
-		return fmt.Errorf("Encoded data must not be an empty string.")
+		return "", fmt.Errorf("Encoded data must not be an empty string.")
 	}
 
 	editToken, terr := c.GetEditingToken()
 	if terr != nil {
-		return terr
+		return "", terr
 	}
 
 	response, err := c.client.Post(
@@ -186,27 +186,27 @@ func (c *WikiBaseClient) createClaimOnItem(item ItemPropertyType, property_id st
 	)
 
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer response.Close()
 
-	var res WikiBaseClaimEditResponse
+	var res WikiBaseClaimCreateResponse
 	err = json.NewDecoder(response).Decode(&res)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if res.Error != nil {
-		return fmt.Errorf("Failed to process claim %s on %s with data %v: %v", property_id, item,
+		return "", fmt.Errorf("Failed to process claim %s on %s with data %v: %v", property_id, item,
 			string(encoded_data), res.Error)
 	}
 
 	if res.Success != 1 {
-		return fmt.Errorf("We got an unexpected success value adding claim %s on %s with data %v: %v", property_id,
+		return "", fmt.Errorf("We got an unexpected success value adding claim %s on %s with data %v: %v", property_id,
 			item, string(encoded_data), res)
 	}
 
-	return nil
+	return res.Claim.ID, nil
 
 }
 
@@ -239,36 +239,4 @@ func getDataForClaim(f reflect.StructField, value reflect.Value) ([]byte, error)
 	default:
 		return nil, fmt.Errorf("Tried to upload property of unrecognised type %s", full_type_name)
 	}
-}
-
-func (c *WikiBaseClient) UploadClaimsForItem(item ItemPropertyType, i interface{}) error {
-
-	t := reflect.TypeOf(i)
-	v := reflect.ValueOf(i)
-
-	for i := 0; i < t.NumField(); i++ {
-		f := t.Field(i)
-		value := v.Field(i)
-
-		tag := f.Tag.Get("property")
-		if len(tag) > 0 {
-
-			property_id, ok := c.PropertyMap[tag]
-			if ok == false {
-				return fmt.Errorf("No property map for property label %s", tag)
-			}
-
-			data, err := getDataForClaim(f, value)
-			if err != nil {
-				return fmt.Errorf("Failed to marshal %s on %s: %v", property_id, item, err)
-			}
-
-			err = c.createClaimOnItem(item, property_id, data)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }

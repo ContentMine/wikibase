@@ -119,7 +119,7 @@ type WikiBaseClaimInfo struct {
 	Rank     string           `json:"rank"`
 }
 
-type WikiBaseClaimEditResponse struct {
+type WikiBaseClaimCreateResponse struct {
 	PageInfo WikiBasePageInfo  `json:"pageinfo"`
 	Success  int               `json:"success"`
 	Claim    WikiBaseClaimInfo `json:"claim"`

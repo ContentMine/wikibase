@@ -17,7 +17,6 @@ package wikibase
 import (
 	"encoding/json"
 	"fmt"
-	//"reflect"
 	"strings"
 	"sync"
 )

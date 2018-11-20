@@ -214,24 +214,3 @@ func TestMarshalInternal(t *testing.T) {
 		}
 	}
 }
-
-type singleClaimTestStruct struct {
-	Test string `property:"test"`
-}
-
-func TestUploadClaim(t *testing.T) {
-
-	client := &WikiBaseNetworkTestClient{}
-	client.addDataResponse(`
-{"pageinfo":{"lastrevid":460},"success":1,"claim":{"mainsnak":{"snaktype":"value","property":"P14","hash":"db735571fef70e4d199d40fe10609312fa8e5fa9","datavalue":{"value":"wot!","type":"string"},"datatype":"string"},"type":"statement","id":"Q11$1AE01A5E-EAC8-4568-B866-8E07E93EAB63","rank":"normal"}}
-`)
-	wikibase := NewWikiBaseClient(client)
-	wikibase.PropertyMap["test"] = "P14"
-	token := "insertokenhere"
-	wikibase.editToken = &token
-
-	err := wikibase.UploadClaimsForItem("Q12", singleClaimTestStruct{"blah"})
-	if err != nil {
-		t.Fatalf("We got an unexpected error: %v", err)
-	}
-}
