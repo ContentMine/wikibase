@@ -101,3 +101,21 @@ func TestUploadClaimWithExistingProperty(t *testing.T) {
 		t.Errorf("Got unexpected invocation count: %v", client)
 	}
 }
+
+func TestUploadClaimWithoutPointer(t *testing.T) {
+
+	client := &WikiBaseNetworkTestClient{}
+	wikibase := NewWikiBaseClient(client)
+	wikibase.PropertyMap["test"] = "P14"
+	token := "insertokenhere"
+	wikibase.editToken = &token
+
+	item := SingleClaimTestStruct{Test: "blah"}
+	item.ID = "Q23"
+
+	err := wikibase.UploadClaimsForItem(item)
+	if err == nil {
+		t.Fatalf("We expected an error")
+	}
+}
+
