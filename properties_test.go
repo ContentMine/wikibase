@@ -64,7 +64,7 @@ func TestParseSimpleStruct(t *testing.T) {
     }
 }
 `)
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 
 	err := wikibase.MapPropertyAndItemConfiguration(SimpleTestStruct{})
 	if err != nil {
@@ -80,7 +80,7 @@ func TestParseSimpleStructErrors(t *testing.T) {
 
 	client := &WikiBaseNetworkTestClient{}
 	client.addErrorResponse(fmt.Errorf("Oops"))
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 
 	err := wikibase.MapPropertyAndItemConfiguration(SimpleTestStruct{})
 	if err == nil {
@@ -107,7 +107,7 @@ func TestMapItemByName(t *testing.T) {
     }
 }
 `)
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 
 	err := wikibase.MapItemConfigurationByLabel("blah")
 	if err != nil {

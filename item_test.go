@@ -19,7 +19,7 @@ import (
 )
 
 type SingleClaimTestStruct struct {
-	WikiBaseItemHeader
+	ItemHeader
 
 	Test string `property:"test"`
 }
@@ -30,7 +30,7 @@ func TestUploadClaim(t *testing.T) {
 	client.addDataResponse(`
 {"pageinfo":{"lastrevid":460},"success":1,"claim":{"mainsnak":{"snaktype":"value","property":"P14","hash":"db735571fef70e4d199d40fe10609312fa8e5fa9","datavalue":{"value":"wot!","type":"string"},"datatype":"string"},"type":"statement","id":"Q11$1AE01A5E-EAC8-4568-B866-8E07E93EAB63","rank":"normal"}}
 `)
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 	wikibase.PropertyMap["test"] = "P14"
 	token := "insertokenhere"
 	wikibase.editToken = &token
@@ -57,7 +57,7 @@ func TestUploadClaimWithInitialisedMap(t *testing.T) {
 	client.addDataResponse(`
 {"pageinfo":{"lastrevid":460},"success":1,"claim":{"mainsnak":{"snaktype":"value","property":"P14","hash":"db735571fef70e4d199d40fe10609312fa8e5fa9","datavalue":{"value":"wot!","type":"string"},"datatype":"string"},"type":"statement","id":"Q11$1AE01A5E-EAC8-4568-B866-8E07E93EAB63","rank":"normal"}}
 `)
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 	wikibase.PropertyMap["test"] = "P14"
 	token := "insertokenhere"
 	wikibase.editToken = &token
@@ -82,7 +82,7 @@ func TestUploadClaimWithInitialisedMap(t *testing.T) {
 func TestUploadClaimWithExistingProperty(t *testing.T) {
 
 	client := &WikiBaseNetworkTestClient{}
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 	wikibase.PropertyMap["test"] = "P14"
 	token := "insertokenhere"
 	wikibase.editToken = &token
@@ -105,7 +105,7 @@ func TestUploadClaimWithExistingProperty(t *testing.T) {
 func TestUploadClaimWithoutPointer(t *testing.T) {
 
 	client := &WikiBaseNetworkTestClient{}
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 	wikibase.PropertyMap["test"] = "P14"
 	token := "insertokenhere"
 	wikibase.editToken = &token
@@ -122,12 +122,12 @@ func TestUploadClaimWithoutPointer(t *testing.T) {
 func TestUploadClaimWithArrayItem(t *testing.T) {
 
 	client := &WikiBaseNetworkTestClient{}
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 	wikibase.PropertyMap["test"] = "P14"
 	token := "insertokenhere"
 	wikibase.editToken = &token
 
-    items := make([]SingleClaimTestStruct, 1)
+	items := make([]SingleClaimTestStruct, 1)
 
 	items[0].Test = "blah"
 	items[0].ID = "Q23"
@@ -144,12 +144,12 @@ func TestUploadClaimWithArrayItemPointer(t *testing.T) {
 	client.addDataResponse(`
 {"pageinfo":{"lastrevid":460},"success":1,"claim":{"mainsnak":{"snaktype":"value","property":"P14","hash":"db735571fef70e4d199d40fe10609312fa8e5fa9","datavalue":{"value":"wot!","type":"string"},"datatype":"string"},"type":"statement","id":"Q11$1AE01A5E-EAC8-4568-B866-8E07E93EAB63","rank":"normal"}}
 `)
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 	wikibase.PropertyMap["test"] = "P14"
 	token := "insertokenhere"
 	wikibase.editToken = &token
 
-    items := make([]SingleClaimTestStruct, 1)
+	items := make([]SingleClaimTestStruct, 1)
 
 	items[0].Test = "blah"
 	items[0].ID = "Q23"
@@ -166,4 +166,3 @@ func TestUploadClaimWithArrayItemPointer(t *testing.T) {
 		t.Errorf("We got the wrong property ID: %v", items[0].PropertyIDs)
 	}
 }
-

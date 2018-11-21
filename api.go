@@ -32,12 +32,12 @@ type GeneralAPIResponse struct {
 	RequestID     *string `json:"requestid"`
 }
 
-type Token struct {
+type APIToken struct {
 	CSRFToken *string `json:"csrftoken"`
 }
 
 type TokensQuery struct {
-	Tokens Token `json:"tokens"`
+	Tokens APIToken `json:"tokens"`
 }
 
 type TokenRequestResponse struct {
@@ -45,23 +45,23 @@ type TokenRequestResponse struct {
 	Query TokensQuery `json:"query"`
 }
 
-type WikiBaseSearchItem struct {
+type SearchItem struct {
 	Duration    int    `json:"ns"`
 	Title       string `json:"title"`
 	PageID      int    `json:"pageid"`
 	DisplayText string `json:"displaytext"`
 }
 
-type WikiBaseSearchQuery struct {
-	Items []WikiBaseSearchItem `json:"wbsearch"`
+type SearchQuery struct {
+	Items []SearchItem `json:"wbsearch"`
 }
 
-type WikiBaseSearchResponse struct {
+type SearchQueryResponse struct {
 	GeneralAPIResponse
-	Query WikiBaseSearchQuery `json:"query"`
+	Query SearchQuery `json:"query"`
 }
 
-type WikiBaseArticleEditDetailResponse struct {
+type ArticleEditDetailResponse struct {
 	ContentModel  string  `json:"contentmodel"`
 	New           *string `json:"new"`
 	NewRevisionID int     `json:"newrevid"`
@@ -72,39 +72,39 @@ type WikiBaseArticleEditDetailResponse struct {
 	Title         string  `json:"title"`
 }
 
-type WikiBaseError struct {
+type APIError struct {
 	Code string `json:"code"`
 	Info string `json:"info"`
 }
 
-type WikiBaseArticleEditResponse struct {
-	Edit  *WikiBaseArticleEditDetailResponse `json:"edit"`
-	Error *WikiBaseError                     `json:"error"`
+type ArticleEditResponse struct {
+	Edit  *ArticleEditDetailResponse `json:"edit"`
+	Error *APIError                  `json:"error"`
 }
 
-type WikiBaseItemLabel struct {
+type ItemLabel struct {
 	Language string `json:"language"`
 	Value    string `json:"value"`
 }
 
-type WikiBaseItemEntity struct {
-	Labels         map[string]WikiBaseItemLabel `json:"labels"`
-	ID             ItemPropertyType             `json:"id"`
-	Type           string                       `json:"type"`
-	LastRevisionID int                          `json:"lastrevid"`
+type ItemEntity struct {
+	Labels         map[string]ItemLabel `json:"labels"`
+	ID             ItemPropertyType     `json:"id"`
+	Type           string               `json:"type"`
+	LastRevisionID int                  `json:"lastrevid"`
 }
 
-type WikiBaseItemEditResponse struct {
-	Entity  *WikiBaseItemEntity `json:"entity"`
-	Success int                 `json:"success"`
-	Error   *WikiBaseError      `json:"error"`
+type ItemEditResponse struct {
+	Entity  *ItemEntity `json:"entity"`
+	Success int         `json:"success"`
+	Error   *APIError   `json:"error"`
 }
 
-type WikiBasePageInfo struct {
+type PageInfo struct {
 	LastRevisionID int `json:"lastrevid"`
 }
 
-type WikiBaseSnakInfo struct {
+type SnakInfo struct {
 	SnakType string `json:"snaktype"`
 	Property string `json:"property"`
 	Hash     string `json:"hash"`
@@ -112,20 +112,20 @@ type WikiBaseSnakInfo struct {
 	// Ignoring datavalue for now...
 }
 
-type WikiBaseClaimInfo struct {
-	MainSnak WikiBaseSnakInfo `json:"mainsnak"`
-	Type     string           `json:"type"`
-	ID       string           `json:"id"`
-	Rank     string           `json:"rank"`
+type ClaimInfo struct {
+	MainSnak SnakInfo `json:"mainsnak"`
+	Type     string   `json:"type"`
+	ID       string   `json:"id"`
+	Rank     string   `json:"rank"`
 }
 
-type WikiBaseClaimCreateResponse struct {
-	PageInfo WikiBasePageInfo  `json:"pageinfo"`
-	Success  int               `json:"success"`
-	Claim    WikiBaseClaimInfo `json:"claim"`
-	Error    *WikiBaseError    `json:"error"`
+type ClaimCreateResponse struct {
+	PageInfo PageInfo  `json:"pageinfo"`
+	Success  int       `json:"success"`
+	Claim    ClaimInfo `json:"claim"`
+	Error    *APIError `json:"error"`
 }
 
-func (e *WikiBaseError) Error() string {
+func (e *APIError) Error() string {
 	return fmt.Sprintf("Error from wikibase %s: %s", e.Code, e.Info)
 }

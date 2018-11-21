@@ -19,23 +19,23 @@ import (
 	"reflect"
 )
 
-type WikiBaseItemHeader struct {
+type ItemHeader struct {
 	ID          ItemPropertyType  `json:"wikibase_id,omitempty"`
 	PropertyIDs map[string]string `json:"wikibase_property_ids,omitempty"`
 }
 
-func (c *WikiBaseClient) UploadClaimsForItem(i interface{}) error {
+func (c *Client) UploadClaimsForItem(i interface{}) error {
 
 	// Can we find the headers used to record bits?
 	v := reflect.ValueOf(i)
 	if v.Kind() != reflect.Ptr {
-        return fmt.Errorf("Expected a pointer to the item to upload, not %v", v.Kind())
+		return fmt.Errorf("Expected a pointer to the item to upload, not %v", v.Kind())
 	}
 	s := v.Elem()
 	if s.Kind() != reflect.Struct {
 		return fmt.Errorf("Expected a struct for item to upload, got %v.", s.Kind())
 	}
-	header := s.FieldByName("WikiBaseItemHeader")
+	header := s.FieldByName("ItemHeader")
 	if !header.IsValid() {
 		return fmt.Errorf("Expected struct to have item header")
 	}

@@ -51,7 +51,7 @@ type timeDataClaim struct {
 
 // Loading item and property labels from structs
 
-func (c *WikiBaseClient) MapItemConfigurationByLabel(label string) error {
+func (c *Client) MapItemConfigurationByLabel(label string) error {
 	labels, err := c.FetchItemIDsForLabel(label)
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func (c *WikiBaseClient) MapItemConfigurationByLabel(label string) error {
 	return nil
 }
 
-func (c *WikiBaseClient) MapPropertyAndItemConfiguration(i interface{}) error {
+func (c *Client) MapPropertyAndItemConfiguration(i interface{}) error {
 
 	t := reflect.TypeOf(i)
 	for i := 0; i < t.NumField(); i++ {
@@ -156,7 +156,7 @@ func timeDataClaimToAPIData(value string) ([]byte, error) {
 
 // Upload properties for structs
 
-func (c *WikiBaseClient) createClaimOnItem(item ItemPropertyType, property_id string, encoded_data []byte) (string, error) {
+func (c *Client) createClaimOnItem(item ItemPropertyType, property_id string, encoded_data []byte) (string, error) {
 
 	if len(item) == 0 {
 		return "", fmt.Errorf("Item ID must not be an empty string.")
@@ -190,7 +190,7 @@ func (c *WikiBaseClient) createClaimOnItem(item ItemPropertyType, property_id st
 	}
 	defer response.Close()
 
-	var res WikiBaseClaimCreateResponse
+	var res ClaimCreateResponse
 	err = json.NewDecoder(response).Decode(&res)
 	if err != nil {
 		return "", err

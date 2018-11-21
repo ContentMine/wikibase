@@ -77,7 +77,7 @@ func TestErrorGettingEditingToken(t *testing.T) {
 	client := &WikiBaseNetworkTestClient{}
 	client.addErrorResponse(fmt.Errorf("Oops"))
 
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 
 	_, err := wikibase.GetEditingToken()
 
@@ -99,7 +99,7 @@ func TestErrorGettingEditingTokenWhenAlreadyExists(t *testing.T) {
 	client := &WikiBaseNetworkTestClient{}
 	client.addErrorResponse(fmt.Errorf("Oops"))
 
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 	token := "inserttokenhere"
 	wikibase.editToken = &token
 
@@ -124,7 +124,7 @@ func TestGettingEditingToken(t *testing.T) {
 	client.addDataResponse(`
 {"batchcomplete":"","query":{"tokens":{"csrftoken":"345def4e73a103a0ea37f924f999ffad5be05458+\\\\"}}}
 `)
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 
 	resp, err := wikibase.GetEditingToken()
 
@@ -163,7 +163,7 @@ func TestGettingItemForLabel(t *testing.T) {
     }
 }
 `)
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 
 	resp, err := wikibase.FetchItemIDsForLabel("blah")
 
@@ -198,7 +198,7 @@ func TestGettingUniqueItemForLabel(t *testing.T) {
 	client.addDataResponse(`
     	{"batchcomplete":"","query":{"wbsearch":[{"ns":120,"title":"Item:Q6","pageid":33,"displaytext":"annotation"},{"ns":120,"title":"Item:Q101","pageid":128,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q103","pageid":130,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q105","pageid":132,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q107","pageid":134,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q109","pageid":136,"displaytext":"annotation instance"},{"ns":120,"title":"Item:Q111","pageid":138,"displaytext":"annotation instance"}]}}
 `)
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 
 	resp, err := wikibase.FetchItemIDsForLabel("annotation")
 
@@ -232,7 +232,7 @@ func TestGettingPropertyForLabel(t *testing.T) {
     }
 }
 `)
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 
 	resp, err := wikibase.FetchPropertyIDsForLabel("blah")
 
@@ -284,7 +284,7 @@ func TestCreateItem(t *testing.T) {
     "success": 1
 }
 `)
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 	token := "insertokenhere"
 	wikibase.editToken = &token
 
@@ -332,7 +332,7 @@ func TestCreateItemWithoutEditToken(t *testing.T) {
     "success": 1
 }
 `)
-	wikibase := NewWikiBaseClient(client)
+	wikibase := NewClient(client)
 
 	_, err := wikibase.CreateItemInstance("blah")
 

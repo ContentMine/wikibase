@@ -16,7 +16,7 @@ Currently this library assumes you have valid OAuth tokens for client and consum
 
 For basic API usage there are a series of simple calls in wikibase.go.
 
-If you want to create items and properties, then you can create a structure with a `WikiBaseItemHeader` embedded entry, which you can store the Item ID in, and then use the `property` annotation on all fields you want to be turned into a property. The value of the property annotation should be the label of the property (not the P number, as that will change most likely between production and test servers, so labels are seen as useful abstractions for naming).
+If you want to create items and properties, then you can create a structure with a `ItemHeader` embedded entry, which you can store the Item ID in, and then use the `property` annotation on all fields you want to be turned into a property. The value of the property annotation should be the label of the property (not the P number, as that will change most likely between production and test servers, so labels are seen as useful abstractions for naming).
 
 TODO: Add examples here.
 

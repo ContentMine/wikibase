@@ -26,7 +26,7 @@ import (
 // We don't use the OAuth interface directly so as to let us more readily write unit tests and save on boilerplate
 // code
 
-type WikiBaseOAuthClientInterface interface {
+type NetworkClientInterface interface {
 	Get(args map[string]string) (io.ReadCloser, error)
 	Post(args map[string]string) (io.ReadCloser, error)
 }
@@ -43,12 +43,12 @@ type AccessToken struct {
 	Secret string `json:"secret"`
 }
 
-type WikiBaseOAuthInformation struct {
+type OAuthInformation struct {
 	Consumer ConsumerInformation `json:"consumer"`
 	Access   *AccessToken        `json:"access,omitempty"`
 }
 
-type WikiBaseOAuthClient struct {
+type OAuthNetworkClient struct {
 	APIURL string
 
 	AccessToken *oauth.AccessToken
@@ -57,21 +57,21 @@ type WikiBaseOAuthClient struct {
 
 // Factory method for creating a new client
 
-func LoadOauthInformation(path string) (WikiBaseOAuthInformation, error) {
-	var info WikiBaseOAuthInformation
+func LoadOauthInformation(path string) (OAuthInformation, error) {
+	var info OAuthInformation
 
 	f, err := os.Open(path)
 	if err != nil {
-		return WikiBaseOAuthInformation{}, err
+		return OAuthInformation{}, err
 	}
 
 	err = json.NewDecoder(f).Decode(&info)
 	return info, err
 }
 
-func NewOAuthClient(oauthInfo WikiBaseOAuthInformation, urlbase string) *WikiBaseOAuthClient {
+func NewOAuthNetworkClient(oauthInfo OAuthInformation, urlbase string) *OAuthNetworkClient {
 
-	res := WikiBaseOAuthClient{
+	res := OAuthNetworkClient{
 		APIURL: fmt.Sprintf("%s/w/api.php", urlbase),
 	}
 
@@ -97,7 +97,7 @@ func NewOAuthClient(oauthInfo WikiBaseOAuthInformation, urlbase string) *WikiBas
 // These methods should do as little as possible beyond abstracting the network protocol to enable us
 // to do testing. This is why they don't do JSON demarshalling here, as that needs to be tested.
 
-func (client *WikiBaseOAuthClient) Get(args map[string]string) (io.ReadCloser, error) {
+func (client *OAuthNetworkClient) Get(args map[string]string) (io.ReadCloser, error) {
 
 	// We always deal in JSON here
 	args["format"] = "json"
@@ -114,7 +114,7 @@ func (client *WikiBaseOAuthClient) Get(args map[string]string) (io.ReadCloser, e
 	return response.Body, nil
 }
 
-func (client *WikiBaseOAuthClient) Post(args map[string]string) (io.ReadCloser, error) {
+func (client *OAuthNetworkClient) Post(args map[string]string) (io.ReadCloser, error) {
 
 	// We always deal in JSON here
 	args["format"] = "json"

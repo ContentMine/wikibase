@@ -21,8 +21,8 @@ import (
 	"sync"
 )
 
-type WikiBaseClient struct {
-	client WikiBaseOAuthClientInterface
+type Client struct {
+	client NetworkClientInterface
 
 	// Don't read directly - use GetEditingToken()
 	editToken     *string
@@ -33,15 +33,15 @@ type WikiBaseClient struct {
 	ItemMap     map[string]ItemPropertyType
 }
 
-func NewWikiBaseClient(oauthClient WikiBaseOAuthClientInterface) *WikiBaseClient {
-	return &WikiBaseClient{
+func NewClient(oauthClient NetworkClientInterface) *Client {
+	return &Client{
 		client:      oauthClient,
 		PropertyMap: make(map[string]string, 0),
 		ItemMap:     make(map[string]ItemPropertyType, 0),
 	}
 }
 
-func (c *WikiBaseClient) GetEditingToken() (string, error) {
+func (c *Client) GetEditingToken() (string, error) {
 
 	c.editTokenLock.RLock()
 	initVal := c.editToken
@@ -87,7 +87,7 @@ func (c *WikiBaseClient) GetEditingToken() (string, error) {
 	return *c.editToken, nil
 }
 
-func (c *WikiBaseClient) getWikibaseThingIDForLabel(thing WikiBaseType, label string) ([]string, error) {
+func (c *Client) getWikibaseThingIDForLabel(thing WikiBaseType, label string) ([]string, error) {
 
 	response, err := c.client.Get(
 		map[string]string{
@@ -104,7 +104,7 @@ func (c *WikiBaseClient) getWikibaseThingIDForLabel(thing WikiBaseType, label st
 	}
 	defer response.Close()
 
-	var search WikiBaseSearchResponse
+	var search SearchQueryResponse
 	err = json.NewDecoder(response).Decode(&search)
 	if err != nil {
 		return nil, err
@@ -127,15 +127,15 @@ func (c *WikiBaseClient) getWikibaseThingIDForLabel(thing WikiBaseType, label st
 	return filtered_items, nil
 }
 
-func (c *WikiBaseClient) FetchPropertyIDsForLabel(label string) ([]string, error) {
+func (c *Client) FetchPropertyIDsForLabel(label string) ([]string, error) {
 	return c.getWikibaseThingIDForLabel(WikiBaseProperty, label)
 }
 
-func (c *WikiBaseClient) FetchItemIDsForLabel(label string) ([]string, error) {
+func (c *Client) FetchItemIDsForLabel(label string) ([]string, error) {
 	return c.getWikibaseThingIDForLabel(WikiBaseItem, label)
 }
 
-func (c *WikiBaseClient) CreateArticle(title string, body string) (int, error) {
+func (c *Client) CreateArticle(title string, body string) (int, error) {
 
 	if len(title) == 0 {
 		return 0, fmt.Errorf("Article title must not be an empty string.")
@@ -161,7 +161,7 @@ func (c *WikiBaseClient) CreateArticle(title string, body string) (int, error) {
 	}
 	defer response.Close()
 
-	var res WikiBaseArticleEditResponse
+	var res ArticleEditResponse
 	err = json.NewDecoder(response).Decode(&res)
 	if err != nil {
 		return 0, err
@@ -178,7 +178,7 @@ func (c *WikiBaseClient) CreateArticle(title string, body string) (int, error) {
 	return res.Edit.PageID, nil
 }
 
-func (c *WikiBaseClient) CreateItemInstance(label string) (ItemPropertyType, error) {
+func (c *Client) CreateItemInstance(label string) (ItemPropertyType, error) {
 
 	if len(label) == 0 {
 		return "", fmt.Errorf("Item label must not be an empty string.")
@@ -203,7 +203,7 @@ func (c *WikiBaseClient) CreateItemInstance(label string) (ItemPropertyType, err
 	}
 	defer response.Close()
 
-	var res WikiBaseItemEditResponse
+	var res ItemEditResponse
 	err = json.NewDecoder(response).Decode(&res)
 	if err != nil {
 		return "", err
