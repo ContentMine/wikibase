@@ -17,6 +17,7 @@ package wikibase
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -176,6 +177,41 @@ func (c *Client) CreateArticle(title string, body string) (int, error) {
 	}
 
 	return res.Edit.PageID, nil
+}
+
+func (c *Client) ProtectPage(page_id int) error {
+
+	editToken, terr := c.GetEditingToken()
+	if terr != nil {
+		return terr
+	}
+
+	response, err := c.client.Post(
+		map[string]string{
+			"action":      "protect",
+			"token":       editToken,
+			"pageid":      strconv.Itoa(page_id),
+			"protections": "edit=sysop",
+			"expiry":      "never",
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+	defer response.Close()
+
+	var res ProtectResponse
+	err = json.NewDecoder(response).Decode(&res)
+	if err != nil {
+		return err
+	}
+
+	if res.Error != nil {
+		return res.Error
+	}
+
+	return nil
 }
 
 func (c *Client) CreateItemInstance(label string) (ItemPropertyType, error) {

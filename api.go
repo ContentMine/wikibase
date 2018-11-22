@@ -126,6 +126,23 @@ type ClaimCreateResponse struct {
 	Error    *APIError `json:"error"`
 }
 
+type Protection struct {
+	Move   *string `json:"move"`
+	Edit   *string `json:"edit"`
+	Expiry string  `json:"expiry"`
+}
+
+type ProtectDetailResponse struct {
+	Title       string       `json:"title"`
+	Reason      string       `json:"reason"`
+	Protections []Protection `json:"protections"`
+}
+
+type ProtectResponse struct {
+	Protect *ProtectDetailResponse `json:"protect"`
+	Error   *APIError              `json:"error"`
+}
+
 func (e *APIError) Error() string {
 	return fmt.Sprintf("Error from wikibase %s: %s", e.Code, e.Info)
 }

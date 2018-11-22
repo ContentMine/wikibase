@@ -340,3 +340,39 @@ func TestCreateItemWithoutEditToken(t *testing.T) {
 		t.Errorf("Got unexpected error: %v", err)
 	}
 }
+
+// Page protection tests
+
+func TestProtectPage(t *testing.T) {
+
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
+    	{"protect":{"title":"Hello","reason":"","protections":[{"edit":"sysop","expiry":"infinite"}]}}
+`)
+	wikibase := NewClient(client)
+	token := "insertokenhere"
+	wikibase.editToken = &token
+
+	err := wikibase.ProtectPage(42)
+
+	if err != nil {
+		t.Errorf("Got unexpected error: %v", err)
+	}
+}
+
+func TestProtectPageGetsError(t *testing.T) {
+
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
+    	 {"error":{"code":"nosuchpageid","info":"There is no page with ID 742232.","*":"See http://localhost:8181/w/api.php for API usage. Subscribe to the mediawiki-api-announce mailing list at &lt;https://lists.wikimedia.org/mailman/listinfo/mediawiki-api-announce&gt; for notice of API deprecations and breaking changes."}}
+`)
+	wikibase := NewClient(client)
+	token := "insertokenhere"
+	wikibase.editToken = &token
+
+	err := wikibase.ProtectPage(42)
+
+	if err == nil {
+		t.Errorf("We expected an error")
+	}
+}
