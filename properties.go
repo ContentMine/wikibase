@@ -164,26 +164,27 @@ func (c *Client) createClaimOnItem(item ItemPropertyType, property_id string, en
 	if len(property_id) == 0 {
 		return "", fmt.Errorf("Property ID must not be an empty string.")
 	}
-	if len(encoded_data) == 0 {
-		return "", fmt.Errorf("Encoded data must not be an empty string.")
-	}
 
 	editToken, terr := c.GetEditingToken()
 	if terr != nil {
 		return "", terr
 	}
 
-	response, err := c.client.Post(
-		map[string]string{
-			"action":   "wbcreateclaim",
-			"token":    editToken,
-			"entity":   string(item),
-			"property": property_id,
-			"snaktype": "value",
-			"value":    string(encoded_data),
-			"bot":      "1",
-		},
-	)
+	args := map[string]string{
+		"action":   "wbcreateclaim",
+		"token":    editToken,
+		"entity":   string(item),
+		"property": property_id,
+		"bot":      "1",
+	}
+	if encoded_data == nil || len(encoded_data) == 0 {
+		args["snaktype"] = "novalue"
+	} else {
+		args["snaktype"] = "value"
+		args["value"] = string(encoded_data)
+	}
+
+	response, err := c.client.Post(args)
 
 	if err != nil {
 		return "", err
@@ -213,11 +214,25 @@ func (c *Client) createClaimOnItem(item ItemPropertyType, property_id string, en
 func getDataForClaim(f reflect.StructField, value reflect.Value) ([]byte, error) {
 
 	// now work out how to encode this. We currently support: string, int (as quantity), Time (as TimeData),
-	// and ItemPropertyType (as an item). Everything else we just raise an error on.
+	// and ItemPropertyType (as an item). If the field is a pointer and nil we set no value, otherwise we
+	// use the deference value. Everything else we just raise an error on.
 
 	var data []byte
 
 	full_type_name := fmt.Sprintf("%v", f.Type)
+
+	if value.Kind() == reflect.Ptr {
+		if value.IsNil() {
+			return nil, nil
+		} else {
+			value = value.Elem()
+			if full_type_name[0] != '*' {
+				return nil, fmt.Errorf("We expected a pointer type: %s", full_type_name)
+			}
+			full_type_name = full_type_name[1:]
+		}
+	}
+
 	switch full_type_name {
 	case "time.Time":
 		m, ok := value.Interface().(encoding.TextMarshaler)

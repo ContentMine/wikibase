@@ -166,3 +166,62 @@ func TestUploadClaimWithArrayItemPointer(t *testing.T) {
 		t.Errorf("We got the wrong property ID: %v", items[0].PropertyIDs)
 	}
 }
+
+type PointerPropertyClaimTestStruct struct {
+	ItemHeader
+
+	Test *string `property:"test"`
+}
+
+func TestUploadClaimNilPointer(t *testing.T) {
+
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
+{"pageinfo":{"lastrevid":460},"success":1,"claim":{"mainsnak":{"snaktype":"value","property":"P14","hash":"db735571fef70e4d199d40fe10609312fa8e5fa9","datavalue":{"value":"wot!","type":"string"},"datatype":"string"},"type":"statement","id":"Q11$1AE01A5E-EAC8-4568-B866-8E07E93EAB63","rank":"normal"}}
+`)
+	wikibase := NewClient(client)
+	wikibase.PropertyMap["test"] = "P14"
+	token := "insertokenhere"
+	wikibase.editToken = &token
+
+    // nil structure
+	item := PointerPropertyClaimTestStruct{}
+	item.ID = "Q23"
+
+	err := wikibase.UploadClaimsForItem(&item)
+	if err != nil {
+		t.Fatalf("We got an unexpected error: %v", err)
+	}
+
+    if client.MostRecentArgs["snaktype"] != "novalue" {
+        t.Errorf("We got unexpected arguments for nil property: %v", client.MostRecentArgs)
+    }
+}
+
+func TestUploadClaimValidPointer(t *testing.T) {
+
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
+{"pageinfo":{"lastrevid":460},"success":1,"claim":{"mainsnak":{"snaktype":"value","property":"P14","hash":"db735571fef70e4d199d40fe10609312fa8e5fa9","datavalue":{"value":"wot!","type":"string"},"datatype":"string"},"type":"statement","id":"Q11$1AE01A5E-EAC8-4568-B866-8E07E93EAB63","rank":"normal"}}
+`)
+	wikibase := NewClient(client)
+	wikibase.PropertyMap["test"] = "P14"
+	token := "insertokenhere"
+	wikibase.editToken = &token
+
+    a := "foo"
+	item := PointerPropertyClaimTestStruct{Test: &a}
+	item.ID = "Q23"
+
+	err := wikibase.UploadClaimsForItem(&item)
+	if err != nil {
+		t.Fatalf("We got an unexpected error: %v", err)
+	}
+
+    if client.MostRecentArgs["snaktype"] != "value" {
+        t.Errorf("We got unexpected snaktype argument for non-nil property: %v", client.MostRecentArgs)
+    }
+    if client.MostRecentArgs["value"] != "\"foo\"" {
+        t.Errorf("We got unexpected value argument for non-nil property: %v", client.MostRecentArgs)
+    }
+}

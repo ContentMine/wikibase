@@ -188,16 +188,27 @@ type marshalTestStruct struct {
 	B int
 	C time.Time
 	D ItemPropertyType
+	E *int
+	F *int
+	G *time.Time
+	H *ItemPropertyType
 }
 
 func TestMarshalInternal(t *testing.T) {
 
+	a := 24
+	b := ItemPropertyType("Q23")
 	s := marshalTestStruct{
 		A: "hello",
 		B: 42,
 		C: time.Now(),
 		D: "Q43",
+		E: nil,
+		F: &a,
+		G: nil,
+		H: &b,
 	}
+	expectData := []bool{true, true, true, true, false, true, false, true}
 
 	r := reflect.TypeOf(s)
 	v := reflect.ValueOf(s)
@@ -209,7 +220,7 @@ func TestMarshalInternal(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to marshal claim %d: %v", i, err)
 		}
-		if data == nil {
+		if expectData[i] && data == nil {
 			t.Fatalf("We got no data for field %d", i)
 		}
 	}
