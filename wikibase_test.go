@@ -343,7 +343,7 @@ func TestCreateItemWithoutEditToken(t *testing.T) {
 
 // Page protection tests
 
-func TestProtectPage(t *testing.T) {
+func TestProtectPageByID(t *testing.T) {
 
 	client := &WikiBaseNetworkTestClient{}
 	client.addDataResponse(`
@@ -353,7 +353,24 @@ func TestProtectPage(t *testing.T) {
 	token := "insertokenhere"
 	wikibase.editToken = &token
 
-	err := wikibase.ProtectPage(42)
+	err := wikibase.ProtectPageByID(42)
+
+	if err != nil {
+		t.Errorf("Got unexpected error: %v", err)
+	}
+}
+
+func TestProtectPageByTitle(t *testing.T) {
+
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
+    	{"protect":{"title":"Hello","reason":"","protections":[{"edit":"sysop","expiry":"infinite"}]}}
+`)
+	wikibase := NewClient(client)
+	token := "insertokenhere"
+	wikibase.editToken = &token
+
+	err := wikibase.ProtectPageByTitle("hello")
 
 	if err != nil {
 		t.Errorf("Got unexpected error: %v", err)
@@ -370,7 +387,7 @@ func TestProtectPageGetsError(t *testing.T) {
 	token := "insertokenhere"
 	wikibase.editToken = &token
 
-	err := wikibase.ProtectPage(42)
+	err := wikibase.ProtectPageByID(42)
 
 	if err == nil {
 		t.Errorf("We expected an error")

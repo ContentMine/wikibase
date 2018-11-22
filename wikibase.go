@@ -179,7 +179,7 @@ func (c *Client) CreateArticle(title string, body string) (int, error) {
 	return res.Edit.PageID, nil
 }
 
-func (c *Client) ProtectPage(page_id int) error {
+func (c *Client) protectPage(key string, value string) error {
 
 	editToken, terr := c.GetEditingToken()
 	if terr != nil {
@@ -190,7 +190,7 @@ func (c *Client) ProtectPage(page_id int) error {
 		map[string]string{
 			"action":      "protect",
 			"token":       editToken,
-			"pageid":      strconv.Itoa(page_id),
+			key:           value,
 			"protections": "edit=sysop",
 			"expiry":      "never",
 		},
@@ -212,6 +212,14 @@ func (c *Client) ProtectPage(page_id int) error {
 	}
 
 	return nil
+}
+
+func (c *Client) ProtectPageByTitle(title string) error {
+	return c.protectPage("title", title)
+}
+
+func (c *Client) ProtectPageByID(page_id int) error {
+	return c.protectPage("pageid", strconv.Itoa(page_id))
 }
 
 func (c *Client) CreateItemInstance(label string) (ItemPropertyType, error) {
