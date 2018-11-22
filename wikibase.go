@@ -149,11 +149,10 @@ func (c *Client) CreateArticle(title string, body string) (int, error) {
 
 	response, err := c.client.Post(
 		map[string]string{
-			"action":     "edit",
-			"token":      editToken,
-			"createonly": "true",
-			"title":      fmt.Sprintf("article:%s", title),
-			"text":       body,
+			"action": "edit",
+			"token":  editToken,
+			"title":  fmt.Sprintf("article:%s", title),
+			"text":   body,
 		},
 	)
 
