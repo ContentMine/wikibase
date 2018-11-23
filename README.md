@@ -3,8 +3,8 @@ Simple library for talking to Wikibase in golang
 
 This library has two functions:
 
-* Provides a simple wrapper for common calls the to MediaWiki API for creating articles and getting edit tokens.
-* Provides a simple pseudo-ORM for working with Items and Properties on wikibase
+* Provides a simple wrapper for common calls the to MediaWiki API for creating and protecting articles along with getting edit tokens.
+* Provides a simple pseudo-ORM for working with Items and Properties on wikibase - you build your item as a tagged structure using an embedded header, and then you can sync that up to wikibase to write data there.
 
 Currently this library is work in progress, with a bias on writing to wikibase rather than reading, as that's what has been required on the project this was developed for.
 

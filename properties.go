@@ -75,6 +75,9 @@ func (c *Client) MapPropertyAndItemConfiguration(i interface{}) error {
 
 		tag := f.Tag.Get("property")
 		if len(tag) > 0 {
+			parts := strings.Split(tag, ",")
+			tag = parts[0]
+
 			labels, err := c.FetchPropertyIDsForLabel(tag)
 			if err != nil {
 				return err
@@ -103,47 +106,47 @@ func (c *Client) MapPropertyAndItemConfiguration(i interface{}) error {
 
 // Conversation functions
 
-func stringClaimToAPIData(value string) ([]byte, error) {
-	return json.Marshal(value)
+func stringClaimToAPIData(value string) (string, error) {
+	return value, nil
 }
 
-func itemClaimToAPIData(value ItemPropertyType) ([]byte, error) {
+func itemClaimToAPIData(value ItemPropertyType) (itemClaim, error) {
 
 	if len(value) == 0 {
-		return nil, fmt.Errorf("We expected an item ID, but got an empty string")
+		return itemClaim{}, fmt.Errorf("We expected an item ID, but got an empty string")
 	}
 
 	runes := []rune(value)
 	if runes[0] != 'Q' {
-		return nil, fmt.Errorf("We expected a Q number not %s (starts with %v)", value, runes[0])
+		return itemClaim{}, fmt.Errorf("We expected a Q number not %s (starts with %v)", value, runes[0])
 	}
 
 	parts := strings.Split(string(value), "Q")
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("We expected a Q number not %s (splits as %v)", value, parts)
+		return itemClaim{}, fmt.Errorf("We expected a Q number not %s (splits as %v)", value, parts)
 	}
 
 	id, err := strconv.Atoi(parts[1])
 	if err != nil {
-		return nil, err
+		return itemClaim{}, err
 	}
 
 	item := itemClaim{EntityType: "item", NumericID: id}
 
-	return json.Marshal(item)
+	return item, nil
 }
 
-func quantityClaimToAPIData(value int) ([]byte, error) {
+func quantityClaimToAPIData(value int) (quantityClaim, error) {
 
 	quantity := quantityClaim{
 		Amount: strconv.Itoa(value),
 		Unit:   "1",
 	}
 
-	return json.Marshal(quantity)
+	return quantity, nil
 }
 
-func timeDataClaimToAPIData(value string) ([]byte, error) {
+func timeDataClaimToAPIData(value string) (timeDataClaim, error) {
 
 	time_data := timeDataClaim{
 		Time:          fmt.Sprintf("+0000000%s", value),
@@ -151,7 +154,7 @@ func timeDataClaimToAPIData(value string) ([]byte, error) {
 		CalendarModel: "http://www.wikidata.org/entity/Q1985727",
 	}
 
-	return json.Marshal(time_data)
+	return time_data, nil
 }
 
 // Upload properties for structs
@@ -191,7 +194,7 @@ func (c *Client) createClaimOnItem(item ItemPropertyType, property_id string, en
 	}
 	defer response.Close()
 
-	var res ClaimCreateResponse
+	var res claimCreateResponse
 	err = json.NewDecoder(response).Decode(&res)
 	if err != nil {
 		return "", err
@@ -244,13 +247,29 @@ func getDataForClaim(f reflect.StructField, value reflect.Value) ([]byte, error)
 		if err != nil {
 			return nil, err
 		}
-		return timeDataClaimToAPIData(string(data))
+		claim, claim_err := timeDataClaimToAPIData(string(data))
+		if claim_err != nil {
+			return nil, claim_err
+		}
+		return json.Marshal(claim)
 	case "string":
-		return stringClaimToAPIData(value.String())
+		claim, claim_err := stringClaimToAPIData(value.String())
+		if claim_err != nil {
+			return nil, claim_err
+		}
+		return json.Marshal(claim)
 	case "int":
-		return quantityClaimToAPIData(int(value.Int()))
+		claim, claim_err := quantityClaimToAPIData(int(value.Int()))
+		if claim_err != nil {
+			return nil, claim_err
+		}
+		return json.Marshal(claim)
 	case "wikibase.ItemPropertyType":
-		return itemClaimToAPIData(ItemPropertyType(value.String()))
+		claim, claim_err := itemClaimToAPIData(ItemPropertyType(value.String()))
+		if claim_err != nil {
+			return nil, claim_err
+		}
+		return json.Marshal(claim)
 	default:
 		return nil, fmt.Errorf("Tried to upload property of unrecognised type %s", full_type_name)
 	}

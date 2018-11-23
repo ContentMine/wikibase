@@ -15,12 +15,10 @@
 package wikibase
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
 	"time"
-	"unicode/utf8"
 )
 
 // Test getting properties and items from a struct
@@ -125,13 +123,9 @@ func TestStringClaimEncode(t *testing.T) {
 
 	const testdata = "hello, world"
 
-	data, err := stringClaimToAPIData(testdata)
+	_, err := stringClaimToAPIData(testdata)
 	if err != nil {
 		t.Fatalf("We got an unexpected error: %v", err)
-	}
-	// A cheap test, but check that the returned string is two characters longer due to being in quotes
-	if utf8.RuneCountInString(testdata)+2 != utf8.RuneCountInString(string(data)) {
-		t.Fatalf("Length of encoded data not what we expected: %v", string(data))
 	}
 }
 
@@ -164,21 +158,9 @@ func TestQuntityClaimEncode(t *testing.T) {
 }
 
 func TestTimeDataClaimEncode(t *testing.T) {
-	data, err := timeDataClaimToAPIData("1976-06-06T13:45:02Z")
+	_, err := timeDataClaimToAPIData("1976-06-06T13:45:02Z")
 	if err != nil {
 		t.Fatalf("We got an unexpected error: %v", err)
-	}
-	if data == nil {
-		t.Fatalf("We go no data from claim encode")
-	}
-
-	claim := timeDataClaim{}
-	err = json.Unmarshal(data, &claim)
-	if err != nil {
-		t.Fatalf("we got an unexpected error: %v", err)
-	}
-	if claim.Time != "+00000001976-06-06T13:45:02Z" {
-		t.Errorf("Got unexpected time value: %v", claim)
 	}
 }
 

@@ -14,6 +14,8 @@
 
 package wikibase
 
+// Most API structs are not exported, as they're not exposed by the library API
+
 import (
 	"fmt"
 )
@@ -25,43 +27,53 @@ const (
 	WikiBaseItem     WikiBaseType = "item"
 )
 
-// WikiBase API response structs
+// Error as returned by MediaWiki API
+type APIError struct {
+	Code string `json:"code"`
+	Info string `json:"info"`
+}
 
-type GeneralAPIResponse struct {
+func (e *APIError) Error() string {
+	return fmt.Sprintf("Error from wikibase %s: %s", e.Code, e.Info)
+}
+
+// Mediawiki API response structs
+
+type generalMediaWikiResponse struct {
 	BatchComplete string  `json:"batchcomplete"`
 	RequestID     *string `json:"requestid"`
 }
 
-type APIToken struct {
+type editToken struct {
 	CSRFToken *string `json:"csrftoken"`
 }
 
-type TokensQuery struct {
-	Tokens APIToken `json:"tokens"`
+type tokensQuery struct {
+	Tokens editToken `json:"tokens"`
 }
 
-type TokenRequestResponse struct {
-	GeneralAPIResponse
-	Query TokensQuery `json:"query"`
+type tokenRequestResponse struct {
+	generalMediaWikiResponse
+	Query tokensQuery `json:"query"`
 }
 
-type SearchItem struct {
+type searchItem struct {
 	Duration    int    `json:"ns"`
 	Title       string `json:"title"`
 	PageID      int    `json:"pageid"`
 	DisplayText string `json:"displaytext"`
 }
 
-type SearchQuery struct {
-	Items []SearchItem `json:"wbsearch"`
+type searchQuery struct {
+	Items []searchItem `json:"wbsearch"`
 }
 
-type SearchQueryResponse struct {
-	GeneralAPIResponse
-	Query SearchQuery `json:"query"`
+type searchQueryResponse struct {
+	generalMediaWikiResponse
+	Query searchQuery `json:"query"`
 }
 
-type ArticleEditDetailResponse struct {
+type articleEditDetailResponse struct {
 	ContentModel  string  `json:"contentmodel"`
 	New           *string `json:"new"`
 	NewRevisionID int     `json:"newrevid"`
@@ -72,39 +84,37 @@ type ArticleEditDetailResponse struct {
 	Title         string  `json:"title"`
 }
 
-type APIError struct {
-	Code string `json:"code"`
-	Info string `json:"info"`
-}
-
-type ArticleEditResponse struct {
-	Edit  *ArticleEditDetailResponse `json:"edit"`
+type articleEditResponse struct {
+	Edit  *articleEditDetailResponse `json:"edit"`
 	Error *APIError                  `json:"error"`
 }
 
-type ItemLabel struct {
+// Wikibase API structs
+
+type itemLabel struct {
 	Language string `json:"language"`
 	Value    string `json:"value"`
 }
 
-type ItemEntity struct {
-	Labels         map[string]ItemLabel `json:"labels"`
-	ID             ItemPropertyType     `json:"id"`
-	Type           string               `json:"type"`
-	LastRevisionID int                  `json:"lastrevid"`
+type itemEntity struct {
+	Labels         map[string]itemLabel   `json:"labels"`
+	Claims         map[string][]claimInfo `json:"claims"`
+	ID             ItemPropertyType       `json:"id"`
+	Type           string                 `json:"type"`
+	LastRevisionID int                    `json:"lastrevid"`
 }
 
-type ItemEditResponse struct {
-	Entity  *ItemEntity `json:"entity"`
+type itemEditResponse struct {
+	Entity  *itemEntity `json:"entity"`
 	Success int         `json:"success"`
 	Error   *APIError   `json:"error"`
 }
 
-type PageInfo struct {
+type pageInfo struct {
 	LastRevisionID int `json:"lastrevid"`
 }
 
-type SnakInfo struct {
+type snakInfo struct {
 	SnakType string `json:"snaktype"`
 	Property string `json:"property"`
 	Hash     string `json:"hash"`
@@ -112,37 +122,33 @@ type SnakInfo struct {
 	// Ignoring datavalue for now...
 }
 
-type ClaimInfo struct {
-	MainSnak SnakInfo `json:"mainsnak"`
+type claimInfo struct {
+	MainSnak snakInfo `json:"mainsnak"`
 	Type     string   `json:"type"`
 	ID       string   `json:"id"`
 	Rank     string   `json:"rank"`
 }
 
-type ClaimCreateResponse struct {
-	PageInfo PageInfo  `json:"pageinfo"`
+type claimCreateResponse struct {
+	PageInfo pageInfo  `json:"pageinfo"`
 	Success  int       `json:"success"`
-	Claim    ClaimInfo `json:"claim"`
+	Claim    claimInfo `json:"claim"`
 	Error    *APIError `json:"error"`
 }
 
-type Protection struct {
+type protection struct {
 	Move   *string `json:"move"`
 	Edit   *string `json:"edit"`
 	Expiry string  `json:"expiry"`
 }
 
-type ProtectDetailResponse struct {
+type protectDetailResponse struct {
 	Title       string       `json:"title"`
 	Reason      string       `json:"reason"`
-	Protections []Protection `json:"protections"`
+	Protections []protection `json:"protections"`
 }
 
-type ProtectResponse struct {
-	Protect *ProtectDetailResponse `json:"protect"`
+type protectResponse struct {
+	Protect *protectDetailResponse `json:"protect"`
 	Error   *APIError              `json:"error"`
-}
-
-func (e *APIError) Error() string {
-	return fmt.Sprintf("Error from wikibase %s: %s", e.Code, e.Info)
 }

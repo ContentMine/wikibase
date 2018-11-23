@@ -12,6 +12,8 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
+// Package provides some mediawiki convenience functions along with a pseudo-ORM for creating wikibase items and their
+// associated properties.
 package wikibase
 
 import (
@@ -22,6 +24,8 @@ import (
 	"sync"
 )
 
+// The Wikibase/media wiki client struct. Create this with a call to NewClient, passing it a valid network
+// client.
 type Client struct {
 	client NetworkClientInterface
 
@@ -42,6 +46,8 @@ func NewClient(oauthClient NetworkClientInterface) *Client {
 	}
 }
 
+// GetEditingToken returns an already acquired editing token for this session, or fetches a new one if necessary. This
+// method is thread safe.
 func (c *Client) GetEditingToken() (string, error) {
 
 	c.editTokenLock.RLock()
@@ -73,7 +79,7 @@ func (c *Client) GetEditingToken() (string, error) {
 	}
 	defer response.Close()
 
-	var token TokenRequestResponse
+	var token tokenRequestResponse
 	err = json.NewDecoder(response).Decode(&token)
 	if err != nil {
 		return "", err
@@ -105,7 +111,7 @@ func (c *Client) getWikibaseThingIDForLabel(thing WikiBaseType, label string) ([
 	}
 	defer response.Close()
 
-	var search SearchQueryResponse
+	var search searchQueryResponse
 	err = json.NewDecoder(response).Decode(&search)
 	if err != nil {
 		return nil, err
@@ -136,7 +142,8 @@ func (c *Client) FetchItemIDsForLabel(label string) ([]string, error) {
 	return c.getWikibaseThingIDForLabel(WikiBaseItem, label)
 }
 
-func (c *Client) CreateArticle(title string, body string) (int, error) {
+// Will create a new mediawiki page if necessary, and set its content to the provided body.
+func (c *Client) CreateOrUpdateArticle(title string, body string) (int, error) {
 
 	if len(title) == 0 {
 		return 0, fmt.Errorf("Article title must not be an empty string.")
@@ -161,7 +168,7 @@ func (c *Client) CreateArticle(title string, body string) (int, error) {
 	}
 	defer response.Close()
 
-	var res ArticleEditResponse
+	var res articleEditResponse
 	err = json.NewDecoder(response).Decode(&res)
 	if err != nil {
 		return 0, err
@@ -200,7 +207,7 @@ func (c *Client) protectPage(key string, value string) error {
 	}
 	defer response.Close()
 
-	var res ProtectResponse
+	var res protectResponse
 	err = json.NewDecoder(response).Decode(&res)
 	if err != nil {
 		return err
@@ -213,56 +220,12 @@ func (c *Client) protectPage(key string, value string) error {
 	return nil
 }
 
+// Given a mediawiki page title set edit protection to sysop for that page. Will fail if page does not exist.
 func (c *Client) ProtectPageByTitle(title string) error {
 	return c.protectPage("title", title)
 }
 
+// Given a mediawiki page ID set edit protection to sysop for that page. Will fail if page does not exist.
 func (c *Client) ProtectPageByID(page_id int) error {
 	return c.protectPage("pageid", strconv.Itoa(page_id))
-}
-
-func (c *Client) CreateItemInstance(label string) (ItemPropertyType, error) {
-
-	if len(label) == 0 {
-		return "", fmt.Errorf("Item label must not be an empty string.")
-	}
-
-	editToken, terr := c.GetEditingToken()
-	if terr != nil {
-		return "", terr
-	}
-
-	response, err := c.client.Post(
-		map[string]string{
-			"action": "wbeditentity",
-			"token":  editToken,
-			"new":    "item",
-			"data":   fmt.Sprintf("{\"labels\": {\"en\": {\"language\": \"en\", \"value\": \"%s\"}}}", label),
-		},
-	)
-
-	if err != nil {
-		return "", err
-	}
-	defer response.Close()
-
-	var res ItemEditResponse
-	err = json.NewDecoder(response).Decode(&res)
-	if err != nil {
-		return "", err
-	}
-
-	if res.Error != nil {
-		return "", res.Error
-	}
-
-	if res.Success != 1 {
-		return "", fmt.Errorf("We got an unexpected success value: %v", res)
-	}
-
-	if res.Entity == nil {
-		return "", fmt.Errorf("Unexpected response from server: %v", res)
-	}
-
-	return res.Entity.ID, nil
 }
