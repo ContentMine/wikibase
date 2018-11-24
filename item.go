@@ -89,6 +89,9 @@ func getItemCreateClaimValue(f reflect.StructField, value reflect.Value) (*dataV
 		if err != nil {
 			return nil, err
 		}
+		if t == nil {
+			return nil, nil
+		}
 		data.Value = &t
 		data.Type = "string"
 

@@ -107,9 +107,9 @@ func (c *Client) MapPropertyAndItemConfiguration(i interface{}) error {
 // Conversation functions
 
 func stringClaimToAPIData(value string) (*string, error) {
-    if len(value) == 0 {
-        return nil, nil
-    }
+	if len(value) == 0 {
+		return nil, nil
+	}
 	return &value, nil
 }
 
@@ -261,8 +261,8 @@ func getDataForClaim(f reflect.StructField, value reflect.Value) ([]byte, error)
 			return nil, claim_err
 		}
 		if claim == nil {
-		    // treat empty strings as no value
-		    return nil, nil
+			// treat empty strings as no value
+			return nil, nil
 		}
 		return json.Marshal(claim)
 	case "int":

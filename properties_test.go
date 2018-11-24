@@ -128,7 +128,7 @@ func TestStringClaimEncode(t *testing.T) {
 		t.Fatalf("We got an unexpected error: %v", err)
 	}
 	if v == nil {
-	    t.Errorf("Expected non nil return")
+		t.Errorf("Expected non nil return")
 	}
 }
 
@@ -141,7 +141,7 @@ func TestZeroLengthStringClaimEncode(t *testing.T) {
 		t.Fatalf("We got an unexpected error: %v", err)
 	}
 	if v != nil {
-	    t.Errorf("Zero length string should return nil: %v", v)
+		t.Errorf("Zero length string should return nil: %v", v)
 	}
 }
 
