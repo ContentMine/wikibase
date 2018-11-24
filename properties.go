@@ -107,9 +107,13 @@ func (c *Client) MapPropertyAndItemConfiguration(i interface{}) error {
 // Conversation functions
 
 func stringClaimToAPIData(value string) (*string, error) {
+    // wikibase does not accept zero length strings, so treat them as no value
 	if len(value) == 0 {
 		return nil, nil
 	}
+	// wikibase does not like complex whitespace in strings, nor anything with
+	// leading/training spaces, so do some tidying
+	value = strings.Join(strings.Fields(value), " ")
 	return &value, nil
 }
 

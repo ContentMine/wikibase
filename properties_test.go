@@ -130,6 +130,25 @@ func TestStringClaimEncode(t *testing.T) {
 	if v == nil {
 		t.Errorf("Expected non nil return")
 	}
+	if *v != "hello, world" {
+	    t.Errorf("Got incorrect value back: %s", *v)
+	}
+}
+
+func TestStringClaimWhitespaceEncode(t *testing.T) {
+
+	const testdata = " hello, \nworld "
+
+	v, err := stringClaimToAPIData(testdata)
+	if err != nil {
+		t.Fatalf("We got an unexpected error: %v", err)
+	}
+	if v == nil {
+		t.Errorf("Expected non nil return")
+	}
+	if *v != "hello, world" {
+	    t.Errorf("Got incorrect value back: %s", *v)
+	}
 }
 
 func TestZeroLengthStringClaimEncode(t *testing.T) {
