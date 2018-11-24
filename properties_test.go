@@ -123,9 +123,25 @@ func TestStringClaimEncode(t *testing.T) {
 
 	const testdata = "hello, world"
 
-	_, err := stringClaimToAPIData(testdata)
+	v, err := stringClaimToAPIData(testdata)
 	if err != nil {
 		t.Fatalf("We got an unexpected error: %v", err)
+	}
+	if v == nil {
+	    t.Errorf("Expected non nil return")
+	}
+}
+
+func TestZeroLengthStringClaimEncode(t *testing.T) {
+
+	const testdata = ""
+
+	v, err := stringClaimToAPIData(testdata)
+	if err != nil {
+		t.Fatalf("We got an unexpected error: %v", err)
+	}
+	if v != nil {
+	    t.Errorf("Zero length string should return nil: %v", v)
 	}
 }
 
@@ -174,6 +190,7 @@ type marshalTestStruct struct {
 	F *int
 	G *time.Time
 	H *ItemPropertyType
+	I string
 }
 
 func TestMarshalInternal(t *testing.T) {
@@ -189,8 +206,9 @@ func TestMarshalInternal(t *testing.T) {
 		F: &a,
 		G: nil,
 		H: &b,
+		I: "", // wikidata doesn't cope with zero length strings, so we should return no value for this
 	}
-	expectData := []bool{true, true, true, true, false, true, false, true}
+	expectData := []bool{true, true, true, true, false, true, false, true, false}
 
 	r := reflect.TypeOf(s)
 	v := reflect.ValueOf(s)
