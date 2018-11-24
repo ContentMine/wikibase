@@ -272,7 +272,7 @@ func (c *Client) CreateItemInstance(label string, i interface{}) error {
 	return nil
 }
 
-func (c *Client) UploadClaimsForItem(i interface{}) error {
+func (c *Client) UploadClaimsForItem(i interface{}, allow_refresh bool) error {
 
 	// Can we find the headers used to record bits?
 	v := reflect.ValueOf(i)
@@ -327,8 +327,9 @@ func (c *Client) UploadClaimsForItem(i interface{}) error {
 			// In future we should make this update the claim, but for now if we've set it once
 			// don't set it again
 			id_val := property_map_field.MapIndex(reflect.ValueOf(property_id))
+			have_existing_claim := false
 			if id_val.IsValid() && id_val.Kind() == reflect.String && len(id_val.String()) > 0 {
-				continue
+				have_existing_claim = true
 			}
 
 			data, err := getDataForClaim(f, value)
@@ -336,12 +337,19 @@ func (c *Client) UploadClaimsForItem(i interface{}) error {
 				return fmt.Errorf("Failed to marshal %s on %s: %v", property_id, item_id, err)
 			}
 
-			id, cerr := c.createClaimOnItem(item_id, property_id, data)
-			if cerr != nil {
-				return cerr
-			}
+			if !have_existing_claim {
+				id, err := c.createClaimOnItem(item_id, property_id, data)
+				if err != nil {
+					return err
+				}
 
-			property_map_field.SetMapIndex(reflect.ValueOf(property_id), reflect.ValueOf(id))
+				property_map_field.SetMapIndex(reflect.ValueOf(property_id), reflect.ValueOf(id))
+			} else if allow_refresh {
+				err := c.updateClaim(id_val.String(), data)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 

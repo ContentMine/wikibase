@@ -129,7 +129,7 @@ type claimInfo struct {
 	Rank     string   `json:"rank"`
 }
 
-type claimCreateResponse struct {
+type setCreateResponse struct {
 	PageInfo pageInfo  `json:"pageinfo"`
 	Success  int       `json:"success"`
 	Claim    claimInfo `json:"claim"`

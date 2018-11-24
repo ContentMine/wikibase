@@ -131,7 +131,7 @@ func TestStringClaimEncode(t *testing.T) {
 		t.Errorf("Expected non nil return")
 	}
 	if *v != "hello, world" {
-	    t.Errorf("Got incorrect value back: %s", *v)
+		t.Errorf("Got incorrect value back: %s", *v)
 	}
 }
 
@@ -147,7 +147,7 @@ func TestStringClaimWhitespaceEncode(t *testing.T) {
 		t.Errorf("Expected non nil return")
 	}
 	if *v != "hello, world" {
-	    t.Errorf("Got incorrect value back: %s", *v)
+		t.Errorf("Got incorrect value back: %s", *v)
 	}
 }
 

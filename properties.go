@@ -107,7 +107,7 @@ func (c *Client) MapPropertyAndItemConfiguration(i interface{}) error {
 // Conversation functions
 
 func stringClaimToAPIData(value string) (*string, error) {
-    // wikibase does not accept zero length strings, so treat them as no value
+	// wikibase does not accept zero length strings, so treat them as no value
 	if len(value) == 0 {
 		return nil, nil
 	}
@@ -201,7 +201,7 @@ func (c *Client) createClaimOnItem(item ItemPropertyType, property_id string, en
 	}
 	defer response.Close()
 
-	var res claimCreateResponse
+	var res setCreateResponse
 	err = json.NewDecoder(response).Decode(&res)
 	if err != nil {
 		return "", err
@@ -218,6 +218,56 @@ func (c *Client) createClaimOnItem(item ItemPropertyType, property_id string, en
 	}
 
 	return res.Claim.ID, nil
+}
+
+func (c *Client) updateClaim(claim_id string, encoded_data []byte) error {
+
+	if len(claim_id) == 0 {
+		return fmt.Errorf("Claim ID must not be an empty string.")
+	}
+
+	editToken, terr := c.GetEditingToken()
+	if terr != nil {
+		return terr
+	}
+
+	args := map[string]string{
+		"action": "wbsetclaimvalue",
+		"token":  editToken,
+		"claim":  claim_id,
+		"bot":    "1",
+	}
+	if encoded_data == nil || len(encoded_data) == 0 {
+		args["snaktype"] = "novalue"
+	} else {
+		args["snaktype"] = "value"
+		args["value"] = string(encoded_data)
+	}
+
+	response, err := c.client.Post(args)
+
+	if err != nil {
+		return err
+	}
+	defer response.Close()
+
+	var res setCreateResponse
+	err = json.NewDecoder(response).Decode(&res)
+	if err != nil {
+		return err
+	}
+
+	if res.Error != nil {
+		return fmt.Errorf("Failed to process claim %s with data %v: %v", claim_id,
+			string(encoded_data), res.Error)
+	}
+
+	if res.Success != 1 {
+		return fmt.Errorf("We got an unexpected success value adding claim %s with data %v: %v", claim_id,
+			string(encoded_data), res)
+	}
+
+	return nil
 
 }
 
