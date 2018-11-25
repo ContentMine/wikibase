@@ -51,6 +51,9 @@ type timeDataClaim struct {
 
 // Loading item and property labels from structs
 
+// MapItemConfigurationByLabel will attempt to find the item with the exact matching label on Wikibase and
+// populate the Wikibase client structs internal map of labels to Item IDs. The client will use this when performing
+// ORM like operations on structures to upload to Wikibase.
 func (c *Client) MapItemConfigurationByLabel(label string) error {
 	labels, err := c.FetchItemIDsForLabel(label)
 	if err != nil {
@@ -67,6 +70,9 @@ func (c *Client) MapItemConfigurationByLabel(label string) error {
 	return nil
 }
 
+// MapPropertyAndItemConfiguration will take a pointer to a Go structure that has the embedded wikibase header and
+// item and property tags on its fields and create a map that goes from the labels in the tags to the Item and Property
+// IDs used by Wikibase.
 func (c *Client) MapPropertyAndItemConfiguration(i interface{}) error {
 
 	t := reflect.TypeOf(i)

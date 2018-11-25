@@ -38,6 +38,7 @@ type Client struct {
 	ItemMap     map[string]ItemPropertyType
 }
 
+// NewClient is a factory method for creating a new Client object.
 func NewClient(oauthClient NetworkClientInterface) *Client {
 	return &Client{
 		client:      oauthClient,
@@ -134,15 +135,20 @@ func (c *Client) getWikibaseThingIDForLabel(thing WikiBaseType, label string) ([
 	return filtered_items, nil
 }
 
+// FetchPropertyIDsForLabel will find Wikibase properties with the exact matching label and return them as a list of
+// P numbers.
 func (c *Client) FetchPropertyIDsForLabel(label string) ([]string, error) {
 	return c.getWikibaseThingIDForLabel(WikiBaseProperty, label)
 }
 
+// FetchPropertyIDsForLabel will find Wikibase items with the exact matching label and return them as a list of
+// Q numbers.
 func (c *Client) FetchItemIDsForLabel(label string) ([]string, error) {
 	return c.getWikibaseThingIDForLabel(WikiBaseItem, label)
 }
 
-// Will create a new mediawiki page if necessary, and set its content to the provided body.
+// CreateOrUpdateArticle will create a new mediawiki page if necessary, and set its content to the provided body text.
+// The body should be in wikitext format, or if your Mediawiki instance supports it, parsoidHTML.
 func (c *Client) CreateOrUpdateArticle(title string, body string) (int, error) {
 
 	if len(title) == 0 {
@@ -220,12 +226,12 @@ func (c *Client) protectPage(key string, value string) error {
 	return nil
 }
 
-// Given a mediawiki page title set edit protection to sysop for that page. Will fail if page does not exist.
+// ProtectPageByTitle will attempt to set the edit protection on a page with the given title to admin. Will fail if page does not exist.
 func (c *Client) ProtectPageByTitle(title string) error {
 	return c.protectPage("title", title)
 }
 
-// Given a mediawiki page ID set edit protection to sysop for that page. Will fail if page does not exist.
+// ProtectPageByID will attempt to set the edit protection on a page with the given title to admin. Will fail if page does not exist.
 func (c *Client) ProtectPageByID(page_id int) error {
 	return c.protectPage("pageid", strconv.Itoa(page_id))
 }

@@ -22,6 +22,17 @@ import (
 	"strings"
 )
 
+// ItemHeader must be embedded in all structs that are to be uploaded to Wikibase. If you give this embedded struct
+// a JSON Tag then you can save and restore the Wikibase ID state for the entire struct, which can be used to avoid
+// creating the item multiple times when you run.
+//
+// Each field that you want to sync as a property on the item in Wikibase must have a "property" tag, with the name
+// of the label of a property on Wikibase. We use labels rather than P numbers as it's impossible to guarantee that
+// production, staging, and test servers will use the same P numbers as they are allocated automatically by the
+// Wikibase server; labels on the other hand can be managed by humans/bots. You should always call the client function
+// MapPropertyAndItemConfiguration to populate it's internal map before attempting to create/update Items and their
+// properties. If you add an "omitoncreate" clause then the Property will not be added to the item at create time,
+// only later on during property sync.
 type ItemHeader struct {
 	ID          ItemPropertyType  `json:"wikibase_id,omitempty"`
 	PropertyIDs map[string]string `json:"wikibase_property_ids,omitempty"`
@@ -118,6 +129,10 @@ func getItemCreateClaimValue(f reflect.StructField, value reflect.Value) (*dataV
 	return &data, nil
 }
 
+// CreateItemInstance will take a pointer to a Go structure that has the embedded wikibase header and
+// item and property tags on its fields and create a new item with the provided label. Any fields in the structure
+// with a Property tag that does not contain the "omitoncreate" clause will also be created as item claims at the
+// same time.
 func (c *Client) CreateItemInstance(label string, i interface{}) error {
 
 	if len(label) == 0 {
@@ -272,6 +287,10 @@ func (c *Client) CreateItemInstance(label string, i interface{}) error {
 	return nil
 }
 
+// UploadClaimsForItem will take a pointer to a Go structure that has the embedded wikibase header and
+// item and property tags on its fields and set the claims on the item to match. The item must have been created
+// already. If allow_refresh is set to true, all properties will be written, regardless of whether they've been
+// uploaded before; if set to false only items with no existing Wikibase Property ID in the map will be updated.
 func (c *Client) UploadClaimsForItem(i interface{}, allow_refresh bool) error {
 
 	// Can we find the headers used to record bits?
