@@ -1,6 +1,8 @@
 Simple library for talking to Wikibase in golang
 =================================================
 
+[![GoDoc](http://godoc.org/github.com/ContentMine/wikibase?status.png)](http://godoc.org/github.com/contentmine/wikibase)
+
 This library has two functions:
 
 * Provides a simple wrapper for common calls the to MediaWiki API for creating and protecting articles along with getting edit tokens.
