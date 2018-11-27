@@ -67,16 +67,16 @@ func (c *Client) MapItemConfigurationByLabel(label string, create_if_not_there b
 	switch len(labels) {
 	case 0:
 		if !create_if_not_there {
-		    return fmt.Errorf("No item ID was found for %s", label)
+			return fmt.Errorf("No item ID was found for %s", label)
 		} else {
-		    create_struct := struct{
-		        ItemHeader
-		    }{}
-		    err := c.CreateItemInstance(label, &create_struct)
-		    if err != nil {
-		        return err
-		    }
-		    c.ItemMap[label] = create_struct.ID
+			create_struct := struct {
+				ItemHeader
+			}{}
+			err := c.CreateItemInstance(label, &create_struct)
+			if err != nil {
+				return err
+			}
+			c.ItemMap[label] = create_struct.ID
 		}
 	case 1:
 		c.ItemMap[label] = ItemPropertyType(labels[0])
