@@ -125,7 +125,7 @@ func getItemCreateClaimValue(f reflect.StructField, value reflect.Value) (*dataV
 			return nil, err
 		}
 		data.Value = &t
-		data.Type = datatype
+		data.Type = "wikibase-entityid"
 
 	default:
 		return nil, fmt.Errorf("Tried to upload property of unrecognised type %s", full_type_name)
