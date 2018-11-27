@@ -40,10 +40,12 @@ Once you've defined your structure and created a client you first need to get th
 
 ```
     client := wikibase.NewClient(...)
-    err := client.MapPropertyAndItemConfiguration(ExampleWikibaseItem{})
+    err := client.MapPropertyAndItemConfiguration(ExampleWikibaseItem{}, true)
 ```
 
-If you want to fetch the Q numbers for specific items so you can store them in `ItemProperty` fields then you can call `MapItemConfigurationByLabel`.
+The boolean second argument tells the client to create property definitions if they don't already exist on the wikibase server.
+
+If you want to fetch the Q numbers for specific items so you can store them in `ItemProperty` fields then you can call `MapItemConfigurationByLabel`, which also takes a second argument to say whether it should create the item if not found.
 
 You can create a new Wikibase item as follows:
 
