@@ -78,6 +78,11 @@ func getItemCreateClaimValue(f reflect.StructField, value reflect.Value) (*dataV
 
 	data := dataValue{}
 
+	datatype, err := goTypeToWikibaseType(f)
+	if err != nil {
+		return nil, err
+	}
+
 	switch full_type_name {
 	case "time.Time":
 		m, ok := value.Interface().(encoding.TextMarshaler)
@@ -93,7 +98,7 @@ func getItemCreateClaimValue(f reflect.StructField, value reflect.Value) (*dataV
 			return nil, err
 		}
 		data.Value = &t
-		data.Type = "time"
+		data.Type = datatype
 
 	case "string":
 		t, err := stringClaimToAPIData(value.String())
@@ -104,7 +109,7 @@ func getItemCreateClaimValue(f reflect.StructField, value reflect.Value) (*dataV
 			return nil, nil
 		}
 		data.Value = &t
-		data.Type = "string"
+		data.Type = datatype
 
 	case "int":
 		t, err := quantityClaimToAPIData(int(value.Int()))
@@ -112,7 +117,7 @@ func getItemCreateClaimValue(f reflect.StructField, value reflect.Value) (*dataV
 			return nil, err
 		}
 		data.Value = &t
-		data.Type = "quantity"
+		data.Type = datatype
 
 	case "wikibase.ItemPropertyType":
 		t, err := itemClaimToAPIData(ItemPropertyType(value.String()))
@@ -120,7 +125,7 @@ func getItemCreateClaimValue(f reflect.StructField, value reflect.Value) (*dataV
 			return nil, err
 		}
 		data.Value = &t
-		data.Type = "wikibase-entityid"
+		data.Type = datatype
 
 	default:
 		return nil, fmt.Errorf("Tried to upload property of unrecognised type %s", full_type_name)

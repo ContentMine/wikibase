@@ -49,6 +49,11 @@ type timeDataClaim struct {
 	CalendarModel string `json:"calendarmodel"`
 }
 
+type propertyCreate struct {
+	Labels   map[string]itemLabel `json:"labels"`
+	DataType string               `json:"datatype"`
+}
+
 // Loading item and property labels from structs
 
 // MapItemConfigurationByLabel will attempt to find the item with the exact matching label on Wikibase and
@@ -73,7 +78,7 @@ func (c *Client) MapItemConfigurationByLabel(label string) error {
 // MapPropertyAndItemConfiguration will take a pointer to a Go structure that has the embedded wikibase header and
 // item and property tags on its fields and create a map that goes from the labels in the tags to the Item and Property
 // IDs used by Wikibase.
-func (c *Client) MapPropertyAndItemConfiguration(i interface{}) error {
+func (c *Client) MapPropertyAndItemConfiguration(i interface{}, create_if_not_there bool) error {
 
 	t := reflect.TypeOf(i)
 	for i := 0; i < t.NumField(); i++ {
@@ -90,7 +95,16 @@ func (c *Client) MapPropertyAndItemConfiguration(i interface{}) error {
 			}
 			switch len(labels) {
 			case 0:
-				return fmt.Errorf("No property ID was found for %s", tag)
+				if !create_if_not_there {
+					return fmt.Errorf("No property ID was found for %s", tag)
+				} else {
+					// attempt to create the property
+					id, err := c.createPropertyWithLabel(tag, f)
+					if err != nil {
+						return err
+					}
+					c.PropertyMap[tag] = id
+				}
 			case 1:
 				c.PropertyMap[tag] = labels[0]
 			default:
@@ -340,4 +354,80 @@ func getDataForClaim(f reflect.StructField, value reflect.Value) ([]byte, error)
 	default:
 		return nil, fmt.Errorf("Tried to upload property of unrecognised type %s", full_type_name)
 	}
+}
+
+func goTypeToWikibaseType(f reflect.StructField) (string, error) {
+	full_type_name := fmt.Sprintf("%v", f.Type)
+	if full_type_name[0] == '*' {
+		full_type_name = full_type_name[1:]
+	}
+
+	switch full_type_name {
+	case "time.Time":
+		return "time", nil
+	case "string":
+		return "string", nil
+	case "int":
+		return "quantity", nil
+	case "wikibase.ItemPropertyType":
+		return "wikibase-item", nil
+	default:
+		return "", fmt.Errorf("Tried to convert property of unrecognised type %s", full_type_name)
+	}
+}
+
+func (c *Client) createPropertyWithLabel(label string, f reflect.StructField) (string, error) {
+
+	if len(label) == 0 {
+		return "", fmt.Errorf("Property label must not be an empty string.")
+	}
+
+	datatype, err := goTypeToWikibaseType(f)
+	if err != nil {
+		return "", err
+	}
+
+	editToken, terr := c.GetEditingToken()
+	if terr != nil {
+		return "", terr
+	}
+
+	create := propertyCreate{DataType: datatype, Labels: make(map[string]itemLabel, 0)}
+	l := itemLabel{Language: "en", Value: label}
+	create.Labels["en"] = l
+	b, berr := json.Marshal(create)
+	if berr != nil {
+		return "", berr
+	}
+
+	args := map[string]string{
+		"action": "wbeditentity",
+		"token":  editToken,
+		"new":    "property",
+		"data":   string(b),
+		"bot":    "1",
+	}
+
+	response, err := c.client.Post(args)
+
+	if err != nil {
+		return "", err
+	}
+	defer response.Close()
+
+	var res itemEditResponse
+	err = json.NewDecoder(response).Decode(&res)
+	if err != nil {
+		return "", err
+	}
+
+	if res.Error != nil {
+		return "", fmt.Errorf("Failed to create property %s: %v", label, res.Error)
+	}
+
+	if res.Success != 1 {
+		return "", fmt.Errorf("We got an unexpected success creating property %s: %v", label, res)
+	}
+
+	return string(res.Entity.ID), nil
 }

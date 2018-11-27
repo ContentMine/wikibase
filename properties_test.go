@@ -64,7 +64,7 @@ func TestParseSimpleStruct(t *testing.T) {
 `)
 	wikibase := NewClient(client)
 
-	err := wikibase.MapPropertyAndItemConfiguration(SimpleTestStruct{})
+	err := wikibase.MapPropertyAndItemConfiguration(SimpleTestStruct{}, false)
 	if err != nil {
 		t.Fatalf("We got an unexpected error: %v", err)
 	}
@@ -80,9 +80,68 @@ func TestParseSimpleStructErrors(t *testing.T) {
 	client.addErrorResponse(fmt.Errorf("Oops"))
 	wikibase := NewClient(client)
 
-	err := wikibase.MapPropertyAndItemConfiguration(SimpleTestStruct{})
+	err := wikibase.MapPropertyAndItemConfiguration(SimpleTestStruct{}, false)
 	if err == nil {
 		t.Fatalf("We expected an error")
+	}
+}
+
+func TestParseSimpleStructWithCreateOnOneProperty(t *testing.T) {
+
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
+{
+    "batchcomplete": "",
+    "query": {
+        "wbsearch": [
+            {
+                "ns": 120,
+                "title": "Property:P23",
+                "pageid": 11,
+                "displaytext": "propname"
+            }
+        ]
+    }
+}
+`)
+	client.addDataResponse(`
+{
+    "batchcomplete": "",
+    "query": {
+        "wbsearch": []
+    }
+}
+`)
+	client.addDataResponse(`
+{
+    "entity": {
+        "aliases": {},
+        "claims": {},
+        "descriptions": {},
+        "id": "P26",
+        "labels": {
+            "en": {
+                "language": "en",
+                "value": "address"
+            }
+        },
+        "lastrevid": 4,
+        "type": "property"
+    },
+    "success": 1
+}
+`)
+	wikibase := NewClient(client)
+	token := "insertokenhere"
+	wikibase.editToken = &token
+
+	err := wikibase.MapPropertyAndItemConfiguration(SimpleTestStruct{}, true)
+	if err != nil {
+		t.Fatalf("We got an unexpected error: %v", err)
+	}
+
+	if len(wikibase.PropertyMap) != 2 {
+		t.Fatalf("Our property map does not have enough items: %v", wikibase.PropertyMap)
 	}
 }
 
@@ -241,6 +300,26 @@ func TestMarshalInternal(t *testing.T) {
 		}
 		if expectData[i] && data == nil {
 			t.Fatalf("We got no data for field %d", i)
+		}
+	}
+}
+
+func TestTypeConversion(t *testing.T) {
+
+	s := marshalTestStruct{}
+	expectData := []string{"string", "quantity", "time", "wikibase-item", "quantity",
+		"quantity", "time", "wikibase-item", "string"}
+
+	r := reflect.TypeOf(s)
+	for i := 0; i < r.NumField(); i++ {
+		field := r.Field(i)
+
+		data, err := goTypeToWikibaseType(field)
+		if err != nil {
+			t.Fatalf("Failed to marshal claim %d: %v", i, err)
+		}
+		if expectData[i] != data {
+			t.Fatalf("Expected type %s did not match return %s", expectData[i], data)
 		}
 	}
 }
