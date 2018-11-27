@@ -59,14 +59,25 @@ type propertyCreate struct {
 // MapItemConfigurationByLabel will attempt to find the item with the exact matching label on Wikibase and
 // populate the Wikibase client structs internal map of labels to Item IDs. The client will use this when performing
 // ORM like operations on structures to upload to Wikibase.
-func (c *Client) MapItemConfigurationByLabel(label string) error {
+func (c *Client) MapItemConfigurationByLabel(label string, create_if_not_there bool) error {
 	labels, err := c.FetchItemIDsForLabel(label)
 	if err != nil {
 		return err
 	}
 	switch len(labels) {
 	case 0:
-		return fmt.Errorf("No item ID was found for %s", label)
+		if !create_if_not_there {
+		    return fmt.Errorf("No item ID was found for %s", label)
+		} else {
+		    create_struct := struct{
+		        ItemHeader
+		    }{}
+		    err := c.CreateItemInstance(label, &create_struct)
+		    if err != nil {
+		        return err
+		    }
+		    c.ItemMap[label] = create_struct.ID
+		}
 	case 1:
 		c.ItemMap[label] = ItemPropertyType(labels[0])
 	default:
@@ -114,7 +125,7 @@ func (c *Client) MapPropertyAndItemConfiguration(i interface{}, create_if_not_th
 
 		tag = f.Tag.Get("item")
 		if len(tag) > 0 {
-			err := c.MapItemConfigurationByLabel(tag)
+			err := c.MapItemConfigurationByLabel(tag, create_if_not_there)
 			if err != nil {
 				return err
 			}

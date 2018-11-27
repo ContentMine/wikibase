@@ -166,7 +166,75 @@ func TestMapItemByName(t *testing.T) {
 `)
 	wikibase := NewClient(client)
 
-	err := wikibase.MapItemConfigurationByLabel("blah")
+	err := wikibase.MapItemConfigurationByLabel("blah", false)
+	if err != nil {
+		t.Fatalf("We got an unexpected error: %v", err)
+	}
+
+	if len(wikibase.ItemMap) != 1 {
+		t.Fatalf("Our item map does not have enough items: %v", wikibase.ItemMap)
+	}
+}
+
+func TestMapItemByNameNoMatchNoCreate(t *testing.T) {
+
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
+{
+    "batchcomplete": "",
+    "requestid": "42",
+    "query": {
+        "wbsearch": [
+        ]
+    }
+}
+`)
+	wikibase := NewClient(client)
+
+	err := wikibase.MapItemConfigurationByLabel("blah", false)
+	if err == nil {
+		t.Fatalf("We expected an error")
+	}
+}
+
+func TestMapItemByNameNoMatchWithCreate(t *testing.T) {
+
+	client := &WikiBaseNetworkTestClient{}
+	client.addDataResponse(`
+{
+    "batchcomplete": "",
+    "requestid": "42",
+    "query": {
+        "wbsearch": [
+        ]
+    }
+}
+`)
+	client.addDataResponse(`
+{
+    "entity": {
+        "aliases": {},
+        "claims": {},
+        "descriptions": {},
+        "id": "Q11",
+        "labels": {
+            "en": {
+                "language": "en",
+                "value": "blah"
+            }
+        },
+        "lastrevid": 55,
+        "sitelinks": {},
+        "type": "item"
+    },
+    "success": 1
+}
+`)
+	wikibase := NewClient(client)
+	token := "insertokenhere"
+	wikibase.editToken = &token
+
+	err := wikibase.MapItemConfigurationByLabel("blah", true)
 	if err != nil {
 		t.Fatalf("We got an unexpected error: %v", err)
 	}
