@@ -66,6 +66,18 @@ You can similarly update the Wikibase Item you are modelling like so:
 The boolean argument indicates if properties already uploaded should be updated or ignored. True here means updated, false would have been effectively a no-op. The API is like this as Wikibase API updates are relatively slow, and so having the fidelity to control how much up update can make for a much quicker client.
 
 
+SPARQL Query Service
+--------------------
+
+There is also limited support for using the query service if such a thing is running on the wikibase instance. You can provide a SPARQL query as a string, along with the URL for the REST API endpoint and call:
+
+```
+    res, err := MakeSPARQLQuery(URL_TO_API_ENDPOINT, SPARQL_QUERY)
+```
+
+The return type of SparqlResult is just a thing wrapper around the JSON SPARQL format, with results stored in a map of variable names as defined in the submitted query.
+
+
 License
 ----------
 
