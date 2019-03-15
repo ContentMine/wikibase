@@ -93,7 +93,7 @@ func getItemCreateClaimValue(f reflect.StructField, value reflect.Value) (*dataV
 		if berr != nil {
 			return nil, berr
 		}
-		t, err := timeDataClaimToAPIData(string(b))
+		t, err := TimeDataClaimToAPIData(string(b))
 		if err != nil {
 			return nil, err
 		}
@@ -101,7 +101,7 @@ func getItemCreateClaimValue(f reflect.StructField, value reflect.Value) (*dataV
 		data.Type = datatype
 
 	case "string":
-		t, err := stringClaimToAPIData(value.String())
+		t, err := StringClaimToAPIData(value.String())
 		if err != nil {
 			return nil, err
 		}
@@ -112,7 +112,7 @@ func getItemCreateClaimValue(f reflect.StructField, value reflect.Value) (*dataV
 		data.Type = datatype
 
 	case "int":
-		t, err := quantityClaimToAPIData(int(value.Int()))
+		t, err := QuantityClaimToAPIData(int(value.Int()))
 		if err != nil {
 			return nil, err
 		}
@@ -120,7 +120,7 @@ func getItemCreateClaimValue(f reflect.StructField, value reflect.Value) (*dataV
 		data.Type = datatype
 
 	case "wikibase.ItemPropertyType":
-		t, err := itemClaimToAPIData(ItemPropertyType(value.String()))
+		t, err := ItemClaimToAPIData(ItemPropertyType(value.String()))
 		if err != nil {
 			return nil, err
 		}
@@ -362,7 +362,7 @@ func (c *Client) UploadClaimsForItem(i interface{}, allow_refresh bool) error {
 			}
 
 			if !have_existing_claim {
-				id, err := c.createClaimOnItem(item_id, property_id, data)
+				id, err := c.CreateClaimOnItem(item_id, property_id, data)
 				if err != nil {
 					return err
 				}

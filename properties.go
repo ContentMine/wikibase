@@ -30,17 +30,17 @@ type ItemPropertyType string
 // These are the structs to be sent as json in the data section of a wbcreateclaim call. String does not have
 // one - the value is direct for string
 
-type itemClaim struct {
+type ItemClaim struct {
 	EntityType string `json:"entity-type"`
 	NumericID  int    `json:"numeric-id"`
 }
 
-type quantityClaim struct {
+type QuantityClaim struct {
 	Amount string `json:"amount"`
 	Unit   string `json:"unit"`
 }
 
-type timeDataClaim struct {
+type TimeDataClaim struct {
 	Time          string `json:"time"`
 	TimeZone      int    `json:"timezone"`
 	Before        int    `json:"before"`
@@ -137,7 +137,7 @@ func (c *Client) MapPropertyAndItemConfiguration(i interface{}, create_if_not_th
 
 // Conversation functions
 
-func stringClaimToAPIData(value string) (*string, error) {
+func StringClaimToAPIData(value string) (*string, error) {
 	// wikibase does not accept zero length strings, so treat them as no value
 	if len(value) == 0 {
 		return nil, nil
@@ -148,35 +148,35 @@ func stringClaimToAPIData(value string) (*string, error) {
 	return &value, nil
 }
 
-func itemClaimToAPIData(value ItemPropertyType) (itemClaim, error) {
+func ItemClaimToAPIData(value ItemPropertyType) (ItemClaim, error) {
 
 	if len(value) == 0 {
-		return itemClaim{}, fmt.Errorf("We expected an item ID, but got an empty string")
+		return ItemClaim{}, fmt.Errorf("We expected an item ID, but got an empty string")
 	}
 
 	runes := []rune(value)
 	if runes[0] != 'Q' {
-		return itemClaim{}, fmt.Errorf("We expected a Q number not %s (starts with %v)", value, runes[0])
+		return ItemClaim{}, fmt.Errorf("We expected a Q number not %s (starts with %v)", value, runes[0])
 	}
 
 	parts := strings.Split(string(value), "Q")
 	if len(parts) != 2 {
-		return itemClaim{}, fmt.Errorf("We expected a Q number not %s (splits as %v)", value, parts)
+		return ItemClaim{}, fmt.Errorf("We expected a Q number not %s (splits as %v)", value, parts)
 	}
 
 	id, err := strconv.Atoi(parts[1])
 	if err != nil {
-		return itemClaim{}, err
+		return ItemClaim{}, err
 	}
 
-	item := itemClaim{EntityType: "item", NumericID: id}
+	item := ItemClaim{EntityType: "item", NumericID: id}
 
 	return item, nil
 }
 
-func quantityClaimToAPIData(value int) (quantityClaim, error) {
+func QuantityClaimToAPIData(value int) (QuantityClaim, error) {
 
-	quantity := quantityClaim{
+	quantity := QuantityClaim{
 		Amount: strconv.Itoa(value),
 		Unit:   "1",
 	}
@@ -184,9 +184,9 @@ func quantityClaimToAPIData(value int) (quantityClaim, error) {
 	return quantity, nil
 }
 
-func timeDataClaimToAPIData(value string) (timeDataClaim, error) {
+func TimeDataClaimToAPIData(value string) (TimeDataClaim, error) {
 
-	time_data := timeDataClaim{
+	time_data := TimeDataClaim{
 		Time:          fmt.Sprintf("+0000000%s", value),
 		Precision:     11,
 		CalendarModel: "http://www.wikidata.org/entity/Q1985727",
@@ -197,7 +197,7 @@ func timeDataClaimToAPIData(value string) (timeDataClaim, error) {
 
 // Upload properties for structs
 
-func (c *Client) createClaimOnItem(item ItemPropertyType, property_id string, encoded_data []byte) (string, error) {
+func (c *Client) CreateClaimOnItem(item ItemPropertyType, property_id string, encoded_data []byte) (string, error) {
 
 	if len(item) == 0 {
 		return "", fmt.Errorf("Item ID must not be an empty string.")
@@ -335,13 +335,13 @@ func getDataForClaim(f reflect.StructField, value reflect.Value) ([]byte, error)
 		if err != nil {
 			return nil, err
 		}
-		claim, claim_err := timeDataClaimToAPIData(string(data))
+		claim, claim_err := TimeDataClaimToAPIData(string(data))
 		if claim_err != nil {
 			return nil, claim_err
 		}
 		return json.Marshal(claim)
 	case "string":
-		claim, claim_err := stringClaimToAPIData(value.String())
+		claim, claim_err := StringClaimToAPIData(value.String())
 		if claim_err != nil {
 			return nil, claim_err
 		}
@@ -351,13 +351,13 @@ func getDataForClaim(f reflect.StructField, value reflect.Value) ([]byte, error)
 		}
 		return json.Marshal(claim)
 	case "int":
-		claim, claim_err := quantityClaimToAPIData(int(value.Int()))
+		claim, claim_err := QuantityClaimToAPIData(int(value.Int()))
 		if claim_err != nil {
 			return nil, claim_err
 		}
 		return json.Marshal(claim)
 	case "wikibase.ItemPropertyType":
-		claim, claim_err := itemClaimToAPIData(ItemPropertyType(value.String()))
+		claim, claim_err := ItemClaimToAPIData(ItemPropertyType(value.String()))
 		if claim_err != nil {
 			return nil, claim_err
 		}

@@ -250,7 +250,7 @@ func TestStringClaimEncode(t *testing.T) {
 
 	const testdata = "hello, world"
 
-	v, err := stringClaimToAPIData(testdata)
+	v, err := StringClaimToAPIData(testdata)
 	if err != nil {
 		t.Fatalf("We got an unexpected error: %v", err)
 	}
@@ -266,7 +266,7 @@ func TestStringClaimWhitespaceEncode(t *testing.T) {
 
 	const testdata = " hello, \nworld "
 
-	v, err := stringClaimToAPIData(testdata)
+	v, err := StringClaimToAPIData(testdata)
 	if err != nil {
 		t.Fatalf("We got an unexpected error: %v", err)
 	}
@@ -282,7 +282,7 @@ func TestZeroLengthStringClaimEncode(t *testing.T) {
 
 	const testdata = ""
 
-	v, err := stringClaimToAPIData(testdata)
+	v, err := StringClaimToAPIData(testdata)
 	if err != nil {
 		t.Fatalf("We got an unexpected error: %v", err)
 	}
@@ -292,35 +292,35 @@ func TestZeroLengthStringClaimEncode(t *testing.T) {
 }
 
 func TestItemClaimEncode(t *testing.T) {
-	_, err := itemClaimToAPIData("Q42")
+	_, err := ItemClaimToAPIData("Q42")
 	if err != nil {
 		t.Fatalf("We got an unexpected error: %v", err)
 	}
 }
 
 func TestPropertyAsItemClaimEncode(t *testing.T) {
-	_, err := itemClaimToAPIData("P42")
+	_, err := ItemClaimToAPIData("P42")
 	if err == nil {
 		t.Fatalf("We got an expected an error")
 	}
 }
 
 func TestInvalidItemClaimEncode(t *testing.T) {
-	_, err := itemClaimToAPIData("42")
+	_, err := ItemClaimToAPIData("42")
 	if err == nil {
 		t.Fatalf("We got an expected an error")
 	}
 }
 
 func TestQuntityClaimEncode(t *testing.T) {
-	_, err := quantityClaimToAPIData(42)
+	_, err := QuantityClaimToAPIData(42)
 	if err != nil {
 		t.Fatalf("We got an unexpected error: %v", err)
 	}
 }
 
 func TestTimeDataClaimEncode(t *testing.T) {
-	_, err := timeDataClaimToAPIData("1976-06-06T13:45:02Z")
+	_, err := TimeDataClaimToAPIData("1976-06-06T13:45:02Z")
 	if err != nil {
 		t.Fatalf("We got an unexpected error: %v", err)
 	}
